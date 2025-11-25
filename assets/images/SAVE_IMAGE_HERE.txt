@@ -1,0 +1,6 @@
+Save the police image you uploaded as: police.png
+
+This file should be named exactly: police.png
+Location: assets/images/police.png
+
+After saving, restart your Flutter app to see the police image in the Emergency screen.
