@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:speakable/services/google_tts_service.dart';
 import 'package:get/get.dart';
+import 'package:speakable/services/voice_settings_service.dart';
 import 'package:speakable/models/emotion.dart';
 import 'package:speakable/services/emotion_storage_service.dart';
 
@@ -10,6 +11,8 @@ class FeelingsController extends GetxController {
 
   var emotions = <Emotion>[].obs;
   var isLoading = true.obs;
+
+  final VoiceSettingsService _voiceSettings = Get.find<VoiceSettingsService>();
 
   @override
   void onInit() {
@@ -31,7 +34,11 @@ class FeelingsController extends GetxController {
 
   Future<void> speakEmotion(Emotion emotion) async {
     await flutterTts.stop();
-    await flutterTts.speak(text: emotion.text, languageCode: 'en-US');
+    await flutterTts.speak(
+      text: emotion.text,
+      languageCode: 'en-US',
+      useMaleVoice: _voiceSettings.voiceGender.value == 'male',
+    );
   }
 
   Future<void> addCustomEmotion(String text, IconData icon, Color color) async {

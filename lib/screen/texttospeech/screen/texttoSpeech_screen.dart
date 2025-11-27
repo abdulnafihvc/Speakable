@@ -7,6 +7,8 @@ import 'package:speakable/screen/texttospeech/widgets/text_ttsdisplay_widget.dar
 import 'package:speakable/screen/texttospeech/widgets/action_button_widget.dart';
 import 'package:speakable/services/message_storage_service.dart';
 import 'package:speakable/services/manglish_service.dart';
+import 'package:speakable/services/voice_settings_service.dart';
+import 'package:get/get.dart';
 
 class SpeechScreen extends StatefulWidget {
   const SpeechScreen({super.key});
@@ -33,6 +35,9 @@ class _SpeechScreenState extends State<SpeechScreen> {
     'ml-IN': 'Malayalam',
     'manglish': 'Manglish',
   };
+
+  final VoiceSettingsService _voiceSettings =
+      Get.find<VoiceSettingsService>(); // Voice settings
 
   @override
   void initState() {
@@ -110,7 +115,11 @@ class _SpeechScreenState extends State<SpeechScreen> {
       }
 
       // Start speaking
-      await _flutterTts.speak(text: textToSpeak, languageCode: languageCode);
+      await _flutterTts.speak(
+        text: textToSpeak,
+        languageCode: languageCode,
+        useMaleVoice: _voiceSettings.voiceGender.value == 'male',
+      );
     }
   }
 

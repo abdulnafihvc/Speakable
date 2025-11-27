@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:speakable/services/google_tts_service.dart';
+import 'package:get/get.dart';
+import 'package:speakable/services/voice_settings_service.dart';
 
 class EmergencyCard extends StatefulWidget {
   final IconData? icon;
@@ -26,6 +28,7 @@ class EmergencyCard extends StatefulWidget {
 
 class _EmergencyCardState extends State<EmergencyCard> {
   late GoogleTtsService _googleTts;
+  final VoiceSettingsService _voiceSettings = Get.find<VoiceSettingsService>();
 
   @override
   void initState() {
@@ -39,7 +42,11 @@ class _EmergencyCardState extends State<EmergencyCard> {
 
   Future<void> _speakMessage() async {
     // Speak the message once
-    await _googleTts.speak(text: widget.message, languageCode: 'en-US');
+    await _googleTts.speak(
+      text: widget.message,
+      languageCode: 'en-US',
+      useMaleVoice: _voiceSettings.voiceGender.value == 'male',
+    );
   }
 
   @override

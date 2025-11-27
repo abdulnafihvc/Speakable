@@ -48,22 +48,59 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
           ),
-          _buildSettingTile(
-            context: context,
-            icon: Icons.play_circle_outline,
-            title: 'Test Voice',
-            subtitle: 'Preview selected voice',
-            onTap: () async {
-              final tts = GoogleTtsService();
-              final gender = voiceSettings.voiceGender.value;
-              await tts.speak(
-                text: 'Hello! This is a preview of the $gender voice.',
-                languageCode: 'en-US',
-              );
-              await Future.delayed(const Duration(seconds: 3));
-              await tts.dispose();
-            },
-          ),
+          // Obx(
+          //   () => _buildSettingTile(
+          //     context: context,
+          //     icon: Icons.language,
+          //     title: 'Voice Language',
+          //     subtitle: voiceSettings.getLanguageName(),
+          //     trailing: SegmentedButton<String>(
+          //       segments: const [
+          //         ButtonSegment(
+          //           value: 'en-US',
+          //           label: Text('English'),
+          //           icon: Icon(Icons.language, size: 18),
+          //         ),
+          //         ButtonSegment(
+          //           value: 'ml-IN',
+          //           label: Text('Malayalam'),
+          //           icon: Icon(Icons.translate, size: 18),
+          //         ),
+          //       ],
+          //       selected: {voiceSettings.voiceLanguage.value},
+          //       onSelectionChanged: (Set<String> selection) {
+          //         voiceSettings.setVoiceLanguage(selection.first);
+          //       },
+          //     ),
+          //   ),
+          // ),
+          // Obx(
+          //   () => _buildSettingTile(
+          //     context: context,
+          //     icon: Icons.play_circle_outline,
+          //     title: 'Test Voice',
+          //     subtitle:
+          //         'Preview ${voiceSettings.getLanguageName()} ${voiceSettings.voiceGender.value} voice',
+          //     onTap: () async {
+          //       final tts = GoogleTtsService();
+          //       final gender = voiceSettings.voiceGender.value;
+          //       final language = voiceSettings.voiceLanguage.value;
+
+          //       // Test text based on language
+          //       final testText = language == 'ml-IN'
+          //           ? 'നമസ്കാരം! ഇത് ${gender == 'male' ? 'പുരുഷ' : 'സ്ത്രീ'} ശബ്ദത്തിന്റെ പ്രിവ്യൂ ആണ്.'
+          //           : 'Hello! This is a preview of the $gender voice.';
+
+          //       await tts.speak(
+          //         text: testText,
+          //         languageCode: language,
+          //         useMaleVoice: gender == 'male',
+          //       );
+          //       await Future.delayed(const Duration(seconds: 3));
+          //       await tts.dispose();
+          //     },
+          //   ),
+          // ),
           const SizedBox(height: 24),
 
           // Appearance Section

@@ -3,6 +3,8 @@ import 'package:speakable/services/google_tts_service.dart';
 import 'package:speakable/models/saved_message.dart';
 import 'package:speakable/services/message_storage_service.dart';
 import 'package:speakable/screen/savedMessege/widgets/saved_message_card.dart';
+import 'package:get/get.dart';
+import 'package:speakable/services/voice_settings_service.dart';
 
 class SavedMessegescreen extends StatefulWidget {
   const SavedMessegescreen({super.key});
@@ -14,6 +16,7 @@ class SavedMessegescreen extends StatefulWidget {
 class _SavedMessegescreenState extends State<SavedMessegescreen> {
   final MessageStorageService _storageService = MessageStorageService();
   late GoogleTtsService _flutterTts;
+  final VoiceSettingsService _voiceSettings = Get.find<VoiceSettingsService>();
   List<SavedMessage> _messages = [];
   List<SavedMessage> _filteredMessages = [];
   String? _playingMessageId;
@@ -88,7 +91,11 @@ class _SavedMessegescreenState extends State<SavedMessegescreen> {
         _playingMessageId = message.id;
       });
 
-      await _flutterTts.speak(text: message.text, languageCode: 'en-US');
+      await _flutterTts.speak(
+        text: message.text,
+        languageCode: 'en-US',
+        useMaleVoice: _voiceSettings.voiceGender.value == 'male',
+      );
     }
   }
 

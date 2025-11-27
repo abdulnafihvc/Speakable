@@ -3,6 +3,8 @@ import 'package:speakable/services/google_tts_service.dart';
 import 'package:speakable/models/emotion.dart';
 import 'package:speakable/services/emotion_storage_service.dart';
 import 'package:speakable/screen/feelings/widgets/emotion_button_widget.dart';
+import 'package:get/get.dart';
+import 'package:speakable/services/voice_settings_service.dart';
 
 class FeelingsScreen extends StatefulWidget {
   const FeelingsScreen({super.key});
@@ -14,6 +16,7 @@ class FeelingsScreen extends StatefulWidget {
 class _FeelingsScreenState extends State<FeelingsScreen> {
   final EmotionStorageService _storageService = EmotionStorageService();
   late GoogleTtsService _googleTts;
+  final VoiceSettingsService _voiceSettings = Get.find<VoiceSettingsService>();
   List<Emotion> _emotions = [];
   bool _isLoading = true;
 
@@ -39,7 +42,11 @@ class _FeelingsScreenState extends State<FeelingsScreen> {
 
   Future<void> _speakEmotion(Emotion emotion) async {
     await _googleTts.stop();
-    await _googleTts.speak(text: emotion.text, languageCode: 'en-US');
+    await _googleTts.speak(
+      text: emotion.text,
+      languageCode: 'en-US',
+      useMaleVoice: _voiceSettings.voiceGender.value == 'male',
+    );
   }
 
   void _showAddCustomEmotionDialog() {
