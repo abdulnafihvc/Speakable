@@ -34,7 +34,6 @@ class HomeWidget extends StatelessWidget {
   /// - Centered icon (60px) and text label
   /// - Theme-aware background color
   /// - Responsive sizing (170x165)
-  ///
   /// Returns a [GestureDetector] wrapping a styled [Container]
   @override
   Widget build(BuildContext context) {
@@ -47,8 +46,8 @@ class HomeWidget extends StatelessWidget {
           Flexible(
             flex: 1,
             child: Container(
-              width: 170,
-              height: 165,
+              width: double.infinity,
+              height: double.infinity,
               decoration: BoxDecoration(
                 color: Theme.of(context).cardTheme.color,
                 borderRadius: BorderRadius.circular(15),

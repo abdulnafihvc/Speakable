@@ -6,12 +6,14 @@ class TextDisplayWidget extends StatelessWidget {
   final String text; // Current text content
   final bool isSpeaking; // Whether TTS is currently speaking
   final TextEditingController? controller; // Controller for the text field
+  final FocusNode? focusNode; // Focus node for the text field
 
   const TextDisplayWidget({
     super.key,
     required this.text,
     required this.isSpeaking,
     this.controller,
+    this.focusNode,
   });
 
   @override
@@ -21,6 +23,7 @@ class TextDisplayWidget extends StatelessWidget {
     // Container with rounded corners and shadow effect
     return Container(
       width: double.infinity,
+      // height: 400, // REMOVED fixed height
       padding: const EdgeInsets.all(20),
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
@@ -36,7 +39,7 @@ class TextDisplayWidget extends StatelessWidget {
           ),
         ],
       ),
-      constraints: const BoxConstraints(minHeight: 150, maxHeight: 300),
+      // constraints: const BoxConstraints(minHeight: 150, maxHeight: 400), // REMOVED fixed constraints
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -50,7 +53,6 @@ class TextDisplayWidget extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Text(
-                
                 isSpeaking ? 'Speaking...' : 'Enter Text',
                 style: TextStyle(
                   fontSize: 18,
@@ -67,6 +69,7 @@ class TextDisplayWidget extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
+              focusNode: focusNode,
               maxLines: null,
               expands: true,
               textAlignVertical: TextAlignVertical.top,

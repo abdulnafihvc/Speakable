@@ -5,19 +5,20 @@
   "version": "0.2.0",
   "configurations": [
     
+    
     {
-      "name": "voicepulse",
+      "name": "Speakable",
       "request": "launch",
       "type": "dart"
     },
     {
-      "name": "voicepulse (profile mode)",
+      "name": "Speakable (profile mode)",
       "request": "launch",
       "type": "dart",
       "flutterMode": "profile"
     },
     {
-      "name": "voicepulse (release mode)",
+      "name": "Speakable (release mode)",
       "request": "launch",
       "type": "dart",
       "flutterMode": "release"

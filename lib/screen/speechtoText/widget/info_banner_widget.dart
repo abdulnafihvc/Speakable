@@ -3,16 +3,13 @@ import 'package:flutter/material.dart';
 class InfoBannerWidget extends StatelessWidget {
   final bool isAvailable;
 
-  const InfoBannerWidget({
-    super.key,
-    required this.isAvailable,
-  });
+  const InfoBannerWidget({super.key, required this.isAvailable});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -55,10 +52,7 @@ class InfoBannerWidget extends StatelessWidget {
                   isAvailable
                       ? 'Tap the microphone to start speaking'
                       : 'Microphone permission required',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.white,
-                  ),
+                  style: const TextStyle(fontSize: 14, color: Colors.white),
                 ),
               ],
             ),

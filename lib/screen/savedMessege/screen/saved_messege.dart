@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:speakable/services/google_tts_service.dart';
 import 'package:speakable/models/saved_message.dart';
 import 'package:speakable/services/message_storage_service.dart';
@@ -119,6 +120,17 @@ class _SavedMessegescreenState extends State<SavedMessegescreen> {
         ),
       );
     }
+  }
+
+  void _copyMessage(SavedMessage message) {
+    Clipboard.setData(ClipboardData(text: message.text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Message copied to clipboard'),
+        duration: Duration(seconds: 2),
+        backgroundColor: Colors.blue,
+      ),
+    );
   }
 
   void _showAddMessageDialog() {
@@ -400,6 +412,7 @@ class _SavedMessegescreenState extends State<SavedMessegescreen> {
                     onPlay: () => _playMessage(message),
                     onDelete: () => _deleteMessage(message),
                     onEdit: () => _showEditMessageDialog(message),
+                    onCopy: () => _copyMessage(message),
                   );
                 },
               ),

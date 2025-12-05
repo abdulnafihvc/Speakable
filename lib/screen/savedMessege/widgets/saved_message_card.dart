@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:speakable/models/saved_message.dart';
 import 'package:intl/intl.dart';
 
@@ -7,6 +8,7 @@ class SavedMessageCard extends StatelessWidget {
   final VoidCallback onPlay;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
+  final VoidCallback onCopy;
   final bool isPlaying;
 
   const SavedMessageCard({
@@ -15,6 +17,7 @@ class SavedMessageCard extends StatelessWidget {
     required this.onPlay,
     required this.onDelete,
     required this.onEdit,
+    required this.onCopy,
     required this.isPlaying,
   });
 
@@ -48,9 +51,19 @@ class SavedMessageCard extends StatelessWidget {
               const SizedBox(height: 20),
               _buildMenuOption(
                 context,
+                icon: Icons.copy,
+                label: 'Copy Message',
+                color: Colors.blue,
+                onTap: () {
+                  Navigator.pop(context);
+                  onCopy();
+                },
+              ),
+              _buildMenuOption(
+                context,
                 icon: Icons.edit,
                 label: 'Edit Message',
-                color: Colors.blue,
+                color: Colors.green,
                 onTap: () {
                   Navigator.pop(context);
                   onEdit();

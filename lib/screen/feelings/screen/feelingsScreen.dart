@@ -177,7 +177,8 @@ class _FeelingsScreenState extends State<FeelingsScreen> {
 
   @override
   void dispose() {
-    _googleTts.dispose();
+    // Don't dispose singleton - just stop any ongoing speech
+    _googleTts.stop();
     super.dispose();
   }
 

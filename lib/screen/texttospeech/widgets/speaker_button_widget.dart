@@ -10,7 +10,10 @@ class SpeakerButtonWidget extends StatefulWidget {
     super.key,
     required this.isSpeaking,
     required this.onTap,
+    this.size = 120.0, // Default size
   });
+
+  final double size;
 
   @override
   State<SpeakerButtonWidget> createState() => _SpeakerButtonWidgetState();
@@ -65,8 +68,8 @@ class _SpeakerButtonWidgetState extends State<SpeakerButtonWidget>
         builder: (context, child) {
           // Circular button with animated shadow
           return Container(
-            width: 120,
-            height: 120,
+            width: widget.size,
+            height: widget.size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               // Color changes: green when speaking, purple when idle
@@ -88,7 +91,7 @@ class _SpeakerButtonWidgetState extends State<SpeakerButtonWidget>
             ),
             child: Icon(
               widget.isSpeaking ? Icons.volume_up : Icons.play_arrow,
-              size: 60,
+              size: widget.size * 0.5,
               color: Colors.white,
             ),
           );

@@ -3,121 +3,284 @@ import 'package:get/get.dart';
 import 'package:speakable/controllers/theme_controller.dart';
 import 'package:speakable/services/voice_settings_service.dart';
 import 'package:speakable/services/google_tts_service.dart';
+import 'package:android_intent_plus/android_intent.dart';
+import 'dart:io' show Platform;
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final themeController = Get.find<ThemeController>();
     final voiceSettings = Get.find<VoiceSettingsService>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('Settings'),
+        centerTitle: true,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           // Voice Settings Section
           _buildSectionHeader(context, 'Voice Settings'),
           const SizedBox(height: 8),
-          Obx(
-            () => _buildSettingTile(
-              context: context,
-              icon: Icons.record_voice_over,
-              title: 'Voice Gender',
-              subtitle: voiceSettings.voiceGender.value == 'male'
-                  ? 'Male Voice'
-                  : 'Female Voice',
-              trailing: SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(
-                    value: 'male',
-                    label: Text('Male'),
-                    icon: Icon(Icons.man, size: 18),
+
+          // Voice Settings Card
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Voice Gender
+                  Obx(
+                    () => Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Voice Gender',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        DropdownButton<String>(
+                          value: voiceSettings.voiceGender.value,
+                          underline: const SizedBox(),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'male',
+                              child: Text('Male'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'female',
+                              child: Text('Female'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              voiceSettings.setVoiceGender(value);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                  ButtonSegment(
-                    value: 'female',
-                    label: Text('Female'),
-                    icon: Icon(Icons.woman, size: 18),
-                  ),
+
+                  // Language
+                  // Obx(
+                  //   () => Row(
+                  //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  //     children: [
+                  //       const Text('Language', style: TextStyle(fontSize: 16)),
+                  //       DropdownButton<String>(
+                  //         value: voiceSettings.voiceLanguage.value,
+                  //         underline: const SizedBox(),
+                  //         items: const [
+                  //           DropdownMenuItem(
+                  //             value: 'en-US',
+                  //             child: Text('English'),
+                  //           ),
+                  //           DropdownMenuItem(
+                  //             value: 'ml-IN',
+                  //             child: Text('Malayalam'),
+                  //           ),
+                  //           DropdownMenuItem(
+                  //             value: 'en-IN',
+                  //             child: Text('Manglish'),
+                  //           ),
+                  //         ],
+                  //         onChanged: (value) {
+                  //           if (value != null) {
+                  //             voiceSettings.setVoiceLanguage(value);
+                  //           }
+                  //         },
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
+
+                  // Test Voice Button
+                  // Obx(
+                  //   () => SizedBox(
+                  //     width: double.infinity,
+                  //     child: ElevatedButton.icon(
+                  //       onPressed: () async {
+                  //         final tts = GoogleTtsService.instance;
+                  //         final gender = voiceSettings.voiceGender.value;
+                  //         final language = voiceSettings.voiceLanguage.value;
+
+                  //         String testText;
+                  //         if (language == 'ml-IN') {
+                  //           testText = gender == 'male'
+                  //               ? 'നമസ്കാരം! ഇത് പുരുഷ ശബ്ദത്തിന്റെ പ്രിവ്യൂ ആണ്.'
+                  //               : 'നമസ്കാരം! ഇത് സ്ത്രീ ശബ്ദത്തിന്റെ പ്രിവ്യൂ ആണ്.';
+                  //         } else if (language == 'en-IN') {
+                  //           testText =
+                  //               'Namaskaram! Ithu oru test aanu. This is Manglish mode.';
+                  //         } else {
+                  //           testText =
+                  //               'Hello! This is a preview of the $gender voice.';
+                  //         }
+
+                  //         await tts.speak(
+                  //           text: testText,
+                  //           languageCode: language,
+                  //           useMaleVoice: gender == 'male',
+                  //         );
+                  //       },
+                  //       icon: const Icon(Icons.play_circle_outline),
+                  //       label: Text(
+                  //         'Test ${voiceSettings.getLanguageName()} ${voiceSettings.voiceGender.value} Voice',
+                  //       ),
+                  //       style: ElevatedButton.styleFrom(
+                  //         padding: const EdgeInsets.symmetric(vertical: 12),
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
                 ],
-                selected: {voiceSettings.voiceGender.value},
-                onSelectionChanged: (Set<String> selection) {
-                  voiceSettings.setVoiceGender(selection.first);
-                },
               ),
             ),
           ),
-          // Obx(
-          //   () => _buildSettingTile(
-          //     context: context,
-          //     icon: Icons.language,
-          //     title: 'Voice Language',
-          //     subtitle: voiceSettings.getLanguageName(),
-          //     trailing: SegmentedButton<String>(
-          //       segments: const [
-          //         ButtonSegment(
-          //           value: 'en-US',
-          //           label: Text('English'),
-          //           icon: Icon(Icons.language, size: 18),
-          //         ),
-          //         ButtonSegment(
-          //           value: 'ml-IN',
-          //           label: Text('Malayalam'),
-          //           icon: Icon(Icons.translate, size: 18),
-          //         ),
-          //       ],
-          //       selected: {voiceSettings.voiceLanguage.value},
-          //       onSelectionChanged: (Set<String> selection) {
-          //         voiceSettings.setVoiceLanguage(selection.first);
-          //       },
-          //     ),
-          //   ),
-          // ),
-          // Obx(
-          //   () => _buildSettingTile(
-          //     context: context,
-          //     icon: Icons.play_circle_outline,
-          //     title: 'Test Voice',
-          //     subtitle:
-          //         'Preview ${voiceSettings.getLanguageName()} ${voiceSettings.voiceGender.value} voice',
-          //     onTap: () async {
-          //       final tts = GoogleTtsService();
-          //       final gender = voiceSettings.voiceGender.value;
-          //       final language = voiceSettings.voiceLanguage.value;
+          const SizedBox(height: 16),
 
-          //       // Test text based on language
-          //       final testText = language == 'ml-IN'
-          //           ? 'നമസ്കാരം! ഇത് ${gender == 'male' ? 'പുരുഷ' : 'സ്ത്രീ'} ശബ്ദത്തിന്റെ പ്രിവ്യൂ ആണ്.'
-          //           : 'Hello! This is a preview of the $gender voice.';
-
-          //       await tts.speak(
-          //         text: testText,
-          //         languageCode: language,
-          //         useMaleVoice: gender == 'male',
-          //       );
-          //       await Future.delayed(const Duration(seconds: 3));
-          //       await tts.dispose();
-          //     },
-          //   ),
-          // ),
+          // Manual Instructions Card with Expandable Instructions
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Theme(
+              data: Theme.of(
+                context,
+              ).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                initiallyExpanded: false,
+                tilePadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                childrenPadding: const EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                ),
+                leading: Icon(
+                  Icons.help_outline,
+                  color: Colors.deepPurple,
+                  size: 24,
+                ),
+                title: const Text(
+                  'How to Access Phone TTS Settings',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                children: [
+                  _buildInstructionStep('1', 'Open your phone\'s Settings app'),
+                  _buildInstructionStep(
+                    '2',
+                    'Go to System or General Management',
+                  ),
+                  _buildInstructionStep(
+                    '3',
+                    'Tap on Language & input or Languages',
+                  ),
+                  _buildInstructionStep(
+                    '4',
+                    'Select Text-to-speech output or TTS',
+                  ),
+                  _buildInstructionStep(
+                    '5',
+                    'Choose your preferred Google TTS engine',
+                  ),
+                  _buildInstructionStep(
+                    '6',
+                    'Download English male or female voice if not available',
+                  ),
+                  _buildInstructionStep(
+                    '7',
+                    'Configure voice settings and language',
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(
+                        255,
+                        0,
+                        0,
+                        0,
+                      ).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.blue, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Note: Menu names may vary by device manufacturer',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue.shade700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Open Phone TTS Settings Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _openPhoneTTSSettings(context),
+                      icon: const Icon(Icons.open_in_new),
+                      label: const Text('Open Phone TTS Settings'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 24),
 
           // Appearance Section
           _buildSectionHeader(context, 'Appearance'),
           const SizedBox(height: 8),
-          Obx(
-            () => _buildSettingTile(
-              context: context,
-              icon: themeController.isDarkMode
-                  ? Icons.dark_mode
-                  : Icons.light_mode,
-              title: 'Dark Mode',
-              subtitle: themeController.isDarkMode ? 'Enabled' : 'Disabled',
-              trailing: Switch(
-                value: themeController.isDarkMode,
-                onChanged: (value) => themeController.toggleTheme(),
-                activeTrackColor: Theme.of(context).primaryColor,
+
+          // Appearance Card
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Obx(
+                () => Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Dark Mode', style: TextStyle(fontSize: 16)),
+                    Switch(
+                      value: themeController.isDarkMode,
+                      onChanged: (value) => themeController.toggleTheme(),
+                      activeColor: Theme.of(context).primaryColor,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -126,20 +289,121 @@ class SettingsScreen extends StatelessWidget {
           // About Section
           _buildSectionHeader(context, 'About'),
           const SizedBox(height: 8),
-          _buildSettingTile(
-            context: context,
-            icon: Icons.info_outline,
-            title: 'App Version',
-            subtitle: '1.0.0',
+
+          // About Card
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Speakable',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Version 1.0.0',
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'A comprehensive voice and communication app designed to help you express yourself.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          _buildSettingTile(
-            context: context,
-            icon: Icons.description_outlined,
-            title: 'About Speakable',
-            subtitle: 'Express Yourself',
-            onTap: () {
-              _showAboutDialog(context);
-            },
+        ],
+      ),
+    );
+  }
+
+  /// Opens the phone's Text-to-Speech settings directly
+  Future<void> _openPhoneTTSSettings(BuildContext context) async {
+    if (!Platform.isAndroid) {
+      Get.snackbar(
+        'Not Available',
+        'This feature is only available on Android devices',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    try {
+      const intent = AndroidIntent(action: 'com.android.settings.TTS_SETTINGS');
+      await intent.launch();
+    } catch (e) {
+      // If TTS settings intent fails, try general settings
+      try {
+        const fallbackIntent = AndroidIntent(
+          action: 'android.settings.SETTINGS',
+        );
+        await fallbackIntent.launch();
+
+        Get.snackbar(
+          'Settings Opened',
+          'Navigate to: System > Languages & input > Text-to-speech',
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 4),
+          backgroundColor: Colors.blue,
+          colorText: Colors.white,
+        );
+      } catch (e2) {
+        Get.snackbar(
+          'Error',
+          'Unable to open settings. Please follow the manual steps above.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    }
+  }
+
+  /// Helper method to build instruction steps
+  Widget _buildInstructionStep(String number, String instruction) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: Colors.deepPurple,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                number,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(instruction, style: const TextStyle(fontSize: 15)),
+            ),
           ),
         ],
       ),
@@ -148,80 +412,15 @@ class SettingsScreen extends StatelessWidget {
 
   Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.only(left: 8, bottom: 8),
       child: Text(
-        title,
+        title.toUpperCase(),
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.bold,
           color: Theme.of(context).primaryColor,
           letterSpacing: 1.2,
         ),
-      ),
-    );
-  }
-
-  Widget _buildSettingTile({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    String? subtitle,
-    Widget? trailing,
-    VoidCallback? onTap,
-  }) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, color: Theme.of(context).primaryColor),
-        ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: subtitle != null
-            ? Text(
-                subtitle,
-                style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyMedium?.color,
-                ),
-              )
-            : null,
-        trailing: trailing,
-        onTap: onTap,
-      ),
-    );
-  }
-
-  void _showAboutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('About Speakable'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Speakable',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text('Version 1.0.0'),
-            SizedBox(height: 16),
-            Text(
-              'A comprehensive voice and communication app designed to help you express yourself.',
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
       ),
     );
   }

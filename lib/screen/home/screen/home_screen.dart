@@ -13,33 +13,14 @@ import 'package:speakable/screen/speechtoText/screen/speech_to_text.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  /// Builds the main home screen widget
-  ///
-  /// Returns a [Scaffold] with the app's background color and
-  /// displays the home content grid of navigation options
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: _buildHomeContent(context),
+      body: SafeArea(child: _buildHomeContent(context)),
     );
   }
 
-  /// Builds the main content area of the home screen
-  ///
-  /// Creates a responsive grid layout of navigation cards that adapts to
-  /// device orientation. In portrait mode, displays 2 columns; in landscape
-  /// mode, displays 4 columns. Each card navigates to a different feature:
-  /// - Text to Speech: Convert text input to spoken audio
-  /// - Speech to Text: Convert spoken words to text
-  /// - Image to Speech: Associate images with speech output
-  /// - Feeling: Express emotions and thoughts
-  /// - Profile: User profile and information
-  /// - Saved Message: Access saved messages
-  /// - Emergency: Quick access to emergency contacts/messages
-  /// - Settings: App configuration and preferences
-  ///
-  /// Returns an [OrientationBuilder] containing a [GridView] of [HomeWidget] cards
   Widget _buildHomeContent(BuildContext context) {
     final List<Map<String, dynamic>> items = [
       {
@@ -88,35 +69,30 @@ class HomeScreen extends StatelessWidget {
         'icon': Icons.settings,
         'text': 'Settings',
         'color': Colors.deepPurple,
-        'onTap': () => Get.to(() => SettingsScreen()),
+        'onTap': () => Get.to(() => const SettingsScreen()),
       },
     ];
 
-    return OrientationBuilder(
-      builder: (context, orientation) {
-        final isLandscape = orientation == Orientation.landscape;
-        final crossAxisCount = isLandscape ? 4 : 2;
-        final childAspectRatio = isLandscape ? 1.2 : 1.0;
-
-        return Padding(
-          padding: const EdgeInsets.only(top: 40, left: 20, right: 20),
-          child: GridView.count(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: childAspectRatio,
-            physics: const NeverScrollableScrollPhysics(),
-            children: items.map((item) {
-              return HomeWidget(
-                icon: item['icon'],
-                text: item['text'],
-                color: item['color'],
-                onTap: item['onTap'],
-              );
-            }).toList(),
-          ),
-        );
-      },
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: GridView.builder(
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 200,
+          childAspectRatio: 1.0,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+        ),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final item = items[index];
+          return HomeWidget(
+            icon: item['icon'],
+            text: item['text'],
+            color: item['color'],
+            onTap: item['onTap'],
+          );
+        },
+      ),
     );
   }
 }

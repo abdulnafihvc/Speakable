@@ -60,7 +60,8 @@ class FeelingsController extends GetxController {
 
   @override
   void onClose() {
-    flutterTts.dispose();
+    // Don't dispose singleton - just stop any ongoing speech
+    flutterTts.stop();
     super.onClose();
   }
 }

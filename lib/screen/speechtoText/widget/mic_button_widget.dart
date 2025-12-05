@@ -34,9 +34,11 @@ class MicButtonWidget extends StatelessWidget {
               boxShadow: [
                 BoxShadow(
                   color: (isListening ? Colors.red : Colors.deepPurple)
-                      .withOpacity(isListening
-                          ? 0.3 + (animationController.value * 0.3)
-                          : 0.4),
+                      .withOpacity(
+                        isListening
+                            ? 0.3 + (animationController.value * 0.3)
+                            : 0.4,
+                      ),
                   blurRadius: isListening
                       ? 20 + (animationController.value * 10)
                       : 20,

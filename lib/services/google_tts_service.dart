@@ -3,10 +3,17 @@ import 'package:flutter_tts/flutter_tts.dart';
 /// Google TTS Service using flutter_tts package
 /// Provides natural male and female voices with Malayalam support
 class GoogleTtsService {
+  static final GoogleTtsService _instance = GoogleTtsService._internal();
+  static GoogleTtsService get instance => _instance;
+
   final FlutterTts _flutterTts = FlutterTts();
   bool _isInitialized = false;
 
-  GoogleTtsService() {
+  factory GoogleTtsService() {
+    return _instance;
+  }
+
+  GoogleTtsService._internal() {
     _initialize();
   }
 
@@ -35,6 +42,11 @@ class GoogleTtsService {
   /// [text] - Text to speak
   /// [languageCode] - Language code (e.g., 'en-US', 'ml-IN')
   /// [useMaleVoice] - If true, uses male voice; if false, uses female voice (default: true)
+  /// Speak text with specified parameters
+  ///
+  /// [text] - Text to speak
+  /// [languageCode] - Language code (e.g., 'en-US', 'ml-IN')
+  /// [useMaleVoice] - If true, uses male voice; if false, uses female voice (default: true)
   Future<void> speak({
     required String text,
     String? languageCode,
@@ -45,13 +57,18 @@ class GoogleTtsService {
         await _initialize();
       }
 
-      // Set language if provided
-      if (languageCode != null) {
-        await _flutterTts.setLanguage(languageCode);
+      // Map en-IN (Manglish) to ml-IN (Malayalam) for voice selection
+      // The user specifically requested ml-IN models for Manglish
+      String targetLanguage = languageCode ?? 'en-US';
+      if (targetLanguage == 'en-IN') {
+        targetLanguage = 'ml-IN';
       }
 
+      // Set language
+      await _flutterTts.setLanguage(targetLanguage);
+
       // Try to set voice based on gender preference
-      await _setVoiceByGender(languageCode ?? 'en-US', useMaleVoice);
+      await _setVoiceByGender(targetLanguage, useMaleVoice);
 
       // Speak the text
       await _flutterTts.speak(text);
@@ -76,6 +93,13 @@ class GoogleTtsService {
           if (voice is Map) {
             final locale = voice['locale']?.toString() ?? '';
             // Match language code (e.g. 'en' from 'en-US')
+            // If specific region requested (like en-IN/ml-IN), try to match it exactly first
+            if (languageCode.contains('-')) {
+              if (locale.toLowerCase() == languageCode.toLowerCase()) {
+                return true;
+              }
+            }
+            // Fallback to matching language base (e.g. 'en')
             return locale.toLowerCase().startsWith(
               languageCode.split('-')[0].toLowerCase(),
             );
@@ -92,21 +116,43 @@ class GoogleTtsService {
           // Try to find a voice matching the gender preference
           Map? selectedVoice;
 
-          // First pass: Look for explicit gender keywords in name
+          // First pass: Look for explicit gender keywords in name or features
           for (var voice in languageVoices) {
             if (voice is Map) {
               final name = voice['name']?.toString().toLowerCase() ?? '';
+              final features =
+                  voice['features']?.toString().toLowerCase() ?? '';
+
+              // Check features field first for explicit gender
+              if (useMaleVoice) {
+                if (features.contains('gender=male')) {
+                  selectedVoice = voice;
+                  print('DEBUG: Found male voice (from features): $name');
+                  break;
+                }
+              } else {
+                if (features.contains('gender=female')) {
+                  selectedVoice = voice;
+                  print('DEBUG: Found female voice (from features): $name');
+                  break;
+                }
+              }
 
               // Special handling for Malayalam voices (ml-IN)
-              // Patterns include:
-              // - Standard: ml-IN-Standard-A/B/C/D or ml-IN-Wavenet-A/B/C/D
-              // - Device-specific: ml-in-x-mlc-local, ml-in-x-mle-local, etc.
-              // Gender patterns (device-specific): mle/mlm = Male, mlc/mla/mlf = Female
+              // User requested specific Google models:
+              // - ml-IN-Standard-A (Female)
+              // - ml-IN-Standard-B (Male)
               if (name.contains('ml-in') || name.contains('malayalam')) {
                 if (useMaleVoice) {
                   // Look for male Malayalam voices
-                  // Standard patterns: -b, -d
-                  // Device patterns: mle, mlm (male indicators)
+                  // Prioritize Standard-B
+                  if (name.contains('standard-b')) {
+                    selectedVoice = voice;
+                    print('DEBUG: Found preferred Malayalam male voice: $name');
+                    break;
+                  }
+
+                  // Fallbacks
                   if (name.contains('-b') ||
                       name.contains('-d') ||
                       name.contains('mle') ||
@@ -118,8 +164,16 @@ class GoogleTtsService {
                   }
                 } else {
                   // Look for female Malayalam voices
-                  // Standard patterns: -a, -c
-                  // Device patterns: mla, mlc, mlf (female indicators)
+                  // Prioritize Standard-A
+                  if (name.contains('standard-a')) {
+                    selectedVoice = voice;
+                    print(
+                      'DEBUG: Found preferred Malayalam female voice: $name',
+                    );
+                    break;
+                  }
+
+                  // Fallbacks
                   if (name.contains('-a') ||
                       name.contains('-c') ||
                       name.contains('mla') ||
@@ -135,12 +189,8 @@ class GoogleTtsService {
               }
 
               // Special handling for English voices with device-specific patterns
-              // Device patterns: en-us-x-iob-local, en-gb-x-gba-local, etc.
-              // Common pattern: last letter indicates gender (a=female, b/c/d/m=male)
               if (name.contains('en-') && name.contains('-x-')) {
                 if (useMaleVoice) {
-                  // Look for male English voices
-                  // Device patterns ending with: b, c, d, m (male indicators)
                   if (name.endsWith('b-local') ||
                       name.endsWith('c-local') ||
                       name.endsWith('d-local') ||
@@ -153,8 +203,6 @@ class GoogleTtsService {
                     break;
                   }
                 } else {
-                  // Look for female English voices
-                  // Device patterns ending with: a, e, f (female indicators)
                   if (name.endsWith('a-local') ||
                       name.endsWith('e-local') ||
                       name.endsWith('f-local') ||
@@ -168,8 +216,22 @@ class GoogleTtsService {
                 }
               }
 
+              // Samsung TTS patterns (smtg for male, smtf for female)
               if (useMaleVoice) {
-                // Look for male voice indicators: "male", "#male", or male names
+                if (name.contains('smtg') || name.contains('smtm')) {
+                  selectedVoice = voice;
+                  print('DEBUG: Found Samsung male voice: $name');
+                  break;
+                }
+              } else {
+                if (name.contains('smtf')) {
+                  selectedVoice = voice;
+                  print('DEBUG: Found Samsung female voice: $name');
+                  break;
+                }
+              }
+
+              if (useMaleVoice) {
                 if ((name.contains('male') && !name.contains('female')) ||
                     name.contains('#male') ||
                     name.contains('man') ||
@@ -179,7 +241,6 @@ class GoogleTtsService {
                   break;
                 }
               } else {
-                // Look for female voice indicators
                 if (name.contains('female') ||
                     name.contains('#female') ||
                     name.contains('woman') ||
@@ -195,18 +256,19 @@ class GoogleTtsService {
           // Second pass: If no explicit gender found, use heuristics
           if (selectedVoice == null) {
             print('DEBUG: No explicit gender match found. Using heuristics...');
-
-            // For male voice: prefer voices without "female" keyword
-            // For female voice: prefer voices without "male" keyword
             for (var voice in languageVoices) {
               if (voice is Map) {
                 final name = voice['name']?.toString().toLowerCase() ?? '';
+                final features =
+                    voice['features']?.toString().toLowerCase() ?? '';
 
                 if (useMaleVoice) {
-                  // Avoid voices with female indicators
+                  // Exclude female indicators
                   if (!name.contains('female') &&
+                      !name.contains('smtf') && // Samsung female
                       !name.contains('woman') &&
-                      !name.contains('girl')) {
+                      !name.contains('girl') &&
+                      !features.contains('gender=female')) {
                     selectedVoice = voice;
                     print(
                       'DEBUG: Selected potential male voice (heuristic): $name',
@@ -214,10 +276,13 @@ class GoogleTtsService {
                     break;
                   }
                 } else {
-                  // Avoid voices with male indicators
+                  // Exclude male indicators
                   if (!name.contains('male') &&
+                      !name.contains('smtg') && // Samsung male
+                      !name.contains('smtm') && // Samsung male
                       !name.contains('man') &&
-                      !name.contains('boy')) {
+                      !name.contains('boy') &&
+                      !features.contains('gender=male')) {
                     selectedVoice = voice;
                     print(
                       'DEBUG: Selected potential female voice (heuristic): $name',
@@ -341,6 +406,38 @@ class GoogleTtsService {
       return languages ?? [];
     } catch (e) {
       print('Get languages error: $e');
+      return [];
+    }
+  }
+
+  /// Get current default engine
+  Future<String?> getDefaultEngine() async {
+    try {
+      return await _flutterTts.getDefaultEngine;
+    } catch (e) {
+      print('Get default engine error: $e');
+      return null;
+    }
+  }
+
+  /// Check if using Google TTS engine
+  Future<bool> isUsingGoogleTts() async {
+    try {
+      final engine = await getDefaultEngine();
+      if (engine == null) return false;
+      return engine.toLowerCase().contains('google');
+    } catch (e) {
+      print('Check engine error: $e');
+      return false;
+    }
+  }
+
+  /// Get available engines
+  Future<List<dynamic>> getEngines() async {
+    try {
+      return await _flutterTts.getEngines;
+    } catch (e) {
+      print('Get engines error: $e');
       return [];
     }
   }

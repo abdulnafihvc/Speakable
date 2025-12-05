@@ -1,6 +1,7 @@
 // Text-to-Speech Screen - Main UI for converting text to speech
 // This screen handles both portrait and landscape orientations
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:speakable/services/google_tts_service.dart';
 import 'package:speakable/screen/texttospeech/widgets/speaker_button_widget.dart';
 import 'package:speakable/screen/texttospeech/widgets/text_ttsdisplay_widget.dart';
@@ -22,12 +23,11 @@ class _SpeechScreenState extends State<SpeechScreen> {
   bool _isSpeaking = false; // Tracks if TTS is currently speaking
   final TextEditingController _textController =
       TextEditingController(); // Controls text input
+  final FocusNode _textFocusNode = FocusNode(); // Focus node for text field
   late GoogleTtsService _flutterTts; // Google TTS instance
   final MessageStorageService _storageService =
       MessageStorageService(); // Service for saving messages
   String _selectedLanguage = 'en-US'; // Currently selected language
-  double _speechRate =
-      0.5; // Speech rate (0.0 to 1.0, displayed as 0.2x to 2.0x)
 
   // Available languages for text-to-speech
   final Map<String, String> _languages = {
@@ -43,6 +43,14 @@ class _SpeechScreenState extends State<SpeechScreen> {
   void initState() {
     super.initState();
     _initTts();
+    // Request focus on text field after the frame is built and transition completes
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Small delay to ensure screen transition is complete and widget is stable
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (mounted) {
+        _textFocusNode.requestFocus();
+      }
+    });
   }
 
   // Initialize Google TTS with event handlers and default settings
@@ -81,6 +89,7 @@ class _SpeechScreenState extends State<SpeechScreen> {
   void dispose() {
     _flutterTts.stop();
     _textController.dispose();
+    _textFocusNode.dispose();
     super.dispose();
   }
 
@@ -123,20 +132,21 @@ class _SpeechScreenState extends State<SpeechScreen> {
     }
   }
 
-  // Update the speech rate (speed) for display only
-  void _updateSpeechRate(double rate) {
-    setState(() {
-      _speechRate = rate;
-    });
-  }
-
-  // Copy text to clipboard (TODO: implement actual clipboard functionality)
+  // Copy text to clipboard
   void _copyText() {
     if (_textController.text.isNotEmpty) {
-      // TODO: Implement copy to clipboard using Clipboard.setData()
+      Clipboard.setData(ClipboardData(text: _textController.text));
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Text copied to clipboard'),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.blue,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No text to copy'),
           duration: Duration(seconds: 2),
         ),
       );
@@ -175,11 +185,16 @@ class _SpeechScreenState extends State<SpeechScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if keyboard is visible
+    final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+    final size = MediaQuery.of(context).size;
+    final isSmallScreen = size.width < 360;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       // AppBar with language selector and back button
       appBar: AppBar(
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 2,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Theme.of(context).primaryColor),
@@ -194,6 +209,18 @@ class _SpeechScreenState extends State<SpeechScreen> {
         ),
         centerTitle: true,
         actions: [
+          // Show Done button when keyboard is visible
+          if (isKeyboardVisible)
+            IconButton(
+              icon: Icon(
+                Icons.keyboard_hide,
+                color: Theme.of(context).primaryColor,
+              ),
+              tooltip: 'Hide Keyboard',
+              onPressed: () {
+                _textFocusNode.unfocus();
+              },
+            ),
           // Language selector dropdown menu
           PopupMenuButton<String>(
             icon: Icon(Icons.language, color: Theme.of(context).primaryColor),
@@ -233,46 +260,48 @@ class _SpeechScreenState extends State<SpeechScreen> {
           FocusScope.of(context).unfocus();
         },
         child: SafeArea(
-          // OrientationBuilder provides different layouts for portrait/landscape
-          child: OrientationBuilder(
-            builder: (context, orientation) {
-              final isLandscape = orientation == Orientation.landscape;
+          // LayoutBuilder provides constraints for responsive layout
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isLandscape = constraints.maxWidth > constraints.maxHeight;
+              final availableHeight = constraints.maxHeight;
+              final availableWidth = constraints.maxWidth;
 
               if (isLandscape) {
                 // LANDSCAPE LAYOUT: Horizontal split-screen layout
-                // Left side: Text input | Right side: Controls
                 return Row(
                   children: [
-                    // Left half - Text input area with scrolling
+                    // Left half - Text input area
                     Expanded(
                       flex: 1,
-                      child: SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: TextDisplayWidget(
-                            text: _textController.text,
-                            isSpeaking: _isSpeaking,
-                            controller: _textController,
-                          ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: TextDisplayWidget(
+                          text: _textController.text,
+                          isSpeaking: _isSpeaking,
+                          controller: _textController,
+                          focusNode: _textFocusNode,
                         ),
                       ),
                     ),
-                    // Right half - Speaker button, speed control, and action buttons
+                    // Right half - Controls
                     Expanded(
                       flex: 1,
                       child: SingleChildScrollView(
                         child: Padding(
-                          padding: const EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(16),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const SizedBox(height: 20),
-                              // Speaker Button
+                              // Speaker Button with dynamic size
                               SpeakerButtonWidget(
                                 isSpeaking: _isSpeaking,
                                 onTap: _toggleSpeaking,
+                                size: availableHeight * 0.25 < 100
+                                    ? availableHeight * 0.25
+                                    : 100,
                               ),
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 16),
                               Text(
                                 _isSpeaking ? 'Tap to stop' : 'Tap to play',
                                 style: TextStyle(
@@ -283,77 +312,7 @@ class _SpeechScreenState extends State<SpeechScreen> {
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              const SizedBox(height: 30),
-                              // Speech Rate Control
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                ),
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Icon(
-                                          Icons.speed,
-                                          color: Theme.of(context).primaryColor,
-                                          size: 20,
-                                        ),
-                                        Text(
-                                          'Speed: ${(_speechRate * 2).toStringAsFixed(1)}x',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                            color: Theme.of(
-                                              context,
-                                            ).primaryColor,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    Slider(
-                                      value: _speechRate,
-                                      min: 0.1,
-                                      max: 1.0,
-                                      divisions: 18,
-                                      label:
-                                          '${(_speechRate * 2).toStringAsFixed(1)}x',
-                                      activeColor: Theme.of(
-                                        context,
-                                      ).primaryColor,
-                                      onChanged: (value) {
-                                        _updateSpeechRate(value);
-                                      },
-                                    ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'Slow',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Theme.of(
-                                              context,
-                                            ).textTheme.bodySmall?.color,
-                                          ),
-                                        ),
-                                        Text(
-                                          'Fast',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Theme.of(
-                                              context,
-                                            ).textTheme.bodySmall?.color,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 30),
+                              const SizedBox(height: 24),
                               // Action Buttons
                               Wrap(
                                 alignment: WrapAlignment.center,
@@ -363,7 +322,7 @@ class _SpeechScreenState extends State<SpeechScreen> {
                                   ActionButtonWidget(
                                     icon: Icons.copy,
                                     label: 'Copy',
-                                    color: Colors.red,
+                                    color: Colors.blue,
                                     onTap: _copyText,
                                   ),
                                   ActionButtonWidget(
@@ -380,7 +339,6 @@ class _SpeechScreenState extends State<SpeechScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 20),
                             ],
                           ),
                         ),
@@ -391,127 +349,120 @@ class _SpeechScreenState extends State<SpeechScreen> {
               } else {
                 // PORTRAIT LAYOUT: Vertical stacking layout
                 return SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 20,
-                      horizontal: 0,
-                    ),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 20),
-                        // Text input widget with animated border
-                        TextDisplayWidget(
-                          text: _textController.text,
-                          isSpeaking: _isSpeaking,
-                          controller: _textController,
-                        ),
-                        // ✅ FIXED: Replaced Spacer with fixed spacing to prevent overflow
-                        // Spacer was trying to fill all remaining space, causing overflow
-                        const SizedBox(height: 30),
-                        // Animated speaker button (play/stop)
-                        SpeakerButtonWidget(
-                          isSpeaking: _isSpeaking,
-                          onTap: _toggleSpeaking,
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          _isSpeaking ? 'Tap to stop' : 'Tap to play',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.color,
-                            fontWeight: FontWeight.w500,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: availableHeight),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const SizedBox(height: 16),
+                          // Text input widget - takes up proportional height
+                          SizedBox(
+                            height:
+                                availableHeight * 0.45, // 45% of screen height
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              child: TextDisplayWidget(
+                                text: _textController.text,
+                                isSpeaking: _isSpeaking,
+                                controller: _textController,
+                                focusNode: _textFocusNode,
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 30),
-                        // Speed control slider (0.2x to 2.0x)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 40),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Icon(
-                                    Icons.speed,
-                                    color: Theme.of(context).primaryColor,
-                                    size: 20,
+
+                          // Controls section
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            child: Column(
+                              children: [
+                                // Animated speaker button
+                                SpeakerButtonWidget(
+                                  isSpeaking: _isSpeaking,
+                                  onTap: _toggleSpeaking,
+                                  size: availableWidth * 0.3 < 120
+                                      ? availableWidth * 0.3
+                                      : 120,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _isSpeaking ? 'Tap to stop' : 'Tap to play',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium?.color,
+                                    fontWeight: FontWeight.w500,
                                   ),
-                                  Text(
-                                    'Speed: ${(_speechRate * 2).toStringAsFixed(1)}x',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Theme.of(context).primaryColor,
-                                    ),
+                                ),
+                                const SizedBox(height: 30),
+                                // Action buttons
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
                                   ),
-                                ],
-                              ),
-                              Slider(
-                                value: _speechRate,
-                                min: 0.1,
-                                max: 1.0,
-                                divisions: 18,
-                                label:
-                                    '${(_speechRate * 2).toStringAsFixed(1)}x',
-                                activeColor: Theme.of(context).primaryColor,
-                                onChanged: (value) {
-                                  _updateSpeechRate(value);
-                                },
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Slow',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall?.color,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Fast',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall?.color,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                  child: isSmallScreen
+                                      ? Wrap(
+                                          // Wrap on very small screens
+                                          alignment: WrapAlignment.center,
+                                          spacing: 10,
+                                          runSpacing: 10,
+                                          children: [
+                                            ActionButtonWidget(
+                                              icon: Icons.copy,
+                                              label: 'Copy',
+                                              color: Colors.blue,
+                                              onTap: _copyText,
+                                            ),
+                                            ActionButtonWidget(
+                                              icon: Icons.delete,
+                                              label: 'Clear',
+                                              color: Colors.orange,
+                                              onTap: _clearText,
+                                            ),
+                                            ActionButtonWidget(
+                                              icon: Icons.save,
+                                              label: 'Save',
+                                              color: Colors.green,
+                                              onTap: _saveText,
+                                            ),
+                                          ],
+                                        )
+                                      : Row(
+                                          // Row on normal screens
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          children: [
+                                            ActionButtonWidget(
+                                              icon: Icons.copy,
+                                              label: 'Copy',
+                                              color: Colors.blue,
+                                              onTap: _copyText,
+                                            ),
+                                            ActionButtonWidget(
+                                              icon: Icons.delete,
+                                              label: 'Clear',
+                                              color: Colors.orange,
+                                              onTap: _clearText,
+                                            ),
+                                            ActionButtonWidget(
+                                              icon: Icons.save,
+                                              label: 'Save',
+                                              color: Colors.green,
+                                              onTap: _saveText,
+                                            ),
+                                          ],
+                                        ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 40),
-                        // Action buttons: Copy, Clear, Save
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              ActionButtonWidget(
-                                icon: Icons.delete,
-                                label: 'Clear',
-                                color: Colors.orange,
-                                onTap: _clearText,
-                              ),
-                              ActionButtonWidget(
-                                icon: Icons.save,
-                                label: 'Save',
-                                color: Colors.green,
-                                onTap: _saveText,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-                      ],
+                          const SizedBox(height: 10),
+                        ],
+                      ),
                     ),
                   ),
                 );

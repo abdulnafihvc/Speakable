@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:speakable/controllers/theme_controller.dart';
 import 'package:speakable/screen/home/screen/home_screen.dart';
+import 'package:speakable/screen/voice_selection/voice_selection_screen.dart';
+import 'package:speakable/services/voice_settings_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -19,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
@@ -41,9 +43,19 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    // Navigate to home screen after 3 seconds
-    Future.delayed(const Duration(seconds: 3), () {
-      Get.off(() => const HomeScreen(), transition: Transition.fadeIn);
+    // Navigate based on first-time setup status
+    Future.delayed(const Duration(seconds: 3), () async {
+      final voiceSettings = Get.find<VoiceSettingsService>();
+      final isSetupComplete = await voiceSettings.isFirstTimeSetupComplete();
+
+      if (isSetupComplete) {
+        Get.off(() => const HomeScreen(), transition: Transition.fadeIn);
+      } else {
+        Get.off(
+          () => const VoiceSelectionScreen(),
+          transition: Transition.fadeIn,
+        );
+      }
     });
   }
 
@@ -57,88 +69,95 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     Get.find<ThemeController>();
-    
-    return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDark
-                    ? [
-                        const Color(0xFF1A1A2E),
-                        const Color(0xFF16213E),
-                        const Color(0xFF0F3460),
-                      ]
-                    : [
-                        const Color(0xFF1A1A2E),
-                        const Color(0xFF16213E),
-                        const Color(0xFF0F3460),
-                      ],
-              ),
-            ),
-            child: Center(
-              child: AnimatedBuilder(
-                animation: _controller,
-                builder: (context, child) {
-                  return FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: ScaleTransition(
-                      scale: _scaleAnimation,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  blurRadius: 20,
-                                  spreadRadius: 5,
-                                ),
-                              ],
-                            ),
-                            child: Image.asset(
-                              'assets/icon/splash-icon.png',
-                              width: 150,
-                              height: 150,
 
-                            ),
+    return Scaffold(
+      body: OrientationBuilder(
+        builder: (context, orientation) {
+          final isPortrait = orientation == Orientation.portrait;
+
+          return Stack(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: isDark
+                        ? [
+                            const Color(0xFF1A1A2E),
+                            const Color(0xFF16213E),
+                            const Color(0xFF0F3460),
+                          ]
+                        : [
+                            const Color(0xFF1A1A2E),
+                            const Color(0xFF16213E),
+                            const Color(0xFF0F3460),
+                          ],
+                  ),
+                ),
+                child: Center(
+                  child: AnimatedBuilder(
+                    animation: _controller,
+                    builder: (context, child) {
+                      return FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: ScaleTransition(
+                          scale: _scaleAnimation,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 20,
+                                      spreadRadius: 5,
+                                    ),
+                                  ],
+                                ),
+                                child: Image.asset(
+                                  'assets/icon/splash-icon.png',
+                                  width: isPortrait ? 150 : 100,
+                                  height: isPortrait ? 150 : 100,
+                                ),
+                              ),
+                              SizedBox(height: isPortrait ? 30 : 20),
+                              Text(
+                                'Speakable',
+                                style: TextStyle(
+                                  fontSize: isPortrait ? 42 : 32,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 2,
+                                ),
+                              ),
+                              Text(
+                                'Express Yourself',
+                                style: TextStyle(
+                                  fontSize: isPortrait ? 20 : 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(height: isPortrait ? 50 : 30),
+                              const CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 30),
-                          const Text(
-                            'Speakable',
-                            style: TextStyle(
-                              fontSize: 42,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: 2,
-                            ),
-                          ),
-                          Text('Express Yourself',
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: Colors.white,
-                          ),
-                          
-                          ),
-                           SizedBox(height: 50),
-                          const CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
