@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:speakable/controllers/auth_controller.dart';
 import 'package:speakable/screen/home/widget/home_widget.dart';
 import 'package:speakable/screen/imagetoSpeech/screen/image_to_Speech.dart';
 import 'package:speakable/screen/settings/screen/settings.dart';
@@ -9,9 +10,44 @@ import 'package:speakable/screen/feelings/screen/feelingsScreen.dart';
 import 'package:speakable/screen/profile/screen/profile_sreen.dart';
 import 'package:speakable/screen/emergency/screen/emergency_screen.dart';
 import 'package:speakable/screen/speechtoText/screen/speech_to_text.dart';
+import 'package:speakable/screen/login/screen/login_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  /// Navigate to Speech to Text screen with authentication check
+  void _navigateToSpeechToText(BuildContext context) {
+    final authController = Get.find<AuthController>();
+
+    if (authController.user != null) {
+      // User is authenticated, proceed to Speech to Text screen
+      Get.to(() => const SpeechToTextScreen());
+    } else {
+      // User is not authenticated, show dialog
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Authentication Required'),
+          content: const Text(
+            'You need to be logged in to use the Speech to Text feature. Please log in to continue.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Get.offAll(() => const LoginScreen());
+              },
+              child: const Text('Log In'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +69,7 @@ class HomeScreen extends StatelessWidget {
         'icon': Icons.mic,
         'text': 'Speech to Text',
         'color': Colors.pink,
-        'onTap': () => Get.to(() => const SpeechToTextScreen()),
+        'onTap': () => _navigateToSpeechToText(context),
       },
       {
         'icon': Icons.image,

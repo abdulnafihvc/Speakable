@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:speakable/controllers/auth_controller.dart';
 import 'package:speakable/controllers/theme_controller.dart';
 import 'package:speakable/screen/home/screen/home_screen.dart';
+import 'package:speakable/screen/login/screen/login_screen.dart';
 import 'package:speakable/screen/voice_selection/voice_selection_screen.dart';
 import 'package:speakable/services/voice_settings_service.dart';
 
@@ -43,18 +45,29 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    // Navigate based on first-time setup status
+    // Navigate after animation
     Future.delayed(const Duration(seconds: 3), () async {
-      final voiceSettings = Get.find<VoiceSettingsService>();
-      final isSetupComplete = await voiceSettings.isFirstTimeSetupComplete();
+      if (!mounted) return;
+      final authController = Get.find<AuthController>();
 
-      if (isSetupComplete) {
-        Get.off(() => const HomeScreen(), transition: Transition.fadeIn);
+      // Mark splash as complete so that AuthController's auth state listener
+      // will properly navigate after login/logout from this point forward
+      authController.markSplashComplete();
+
+      final user = authController.user;
+      if (user != null) {
+        final voiceSettings = Get.find<VoiceSettingsService>();
+        final isSetupComplete = await voiceSettings.isFirstTimeSetupComplete();
+        if (isSetupComplete) {
+          Get.off(() => const HomeScreen(), transition: Transition.fadeIn);
+        } else {
+          Get.off(
+            () => const VoiceSelectionScreen(),
+            transition: Transition.fadeIn,
+          );
+        }
       } else {
-        Get.off(
-          () => const VoiceSelectionScreen(),
-          transition: Transition.fadeIn,
-        );
+        Get.off(() => const LoginScreen(), transition: Transition.fadeIn);
       }
     });
   }

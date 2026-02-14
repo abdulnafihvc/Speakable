@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:speakable/controllers/auth_controller.dart';
 import 'package:speakable/controllers/theme_controller.dart';
+import 'package:speakable/screen/login/screen/login_screen.dart';
 import 'package:speakable/services/voice_settings_service.dart';
-import 'package:speakable/services/google_tts_service.dart';
 import 'package:android_intent_plus/android_intent.dart';
+
 import 'dart:io' show Platform;
 
 class SettingsScreen extends StatefulWidget {
@@ -324,9 +326,87 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 24),
+
+          // Account Section
+          _buildSectionHeader(context, 'Account'),
+          const SizedBox(height: 8),
+
+          // Account Card with Logout Button
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.red.withOpacity(0.3)),
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.red.withOpacity(0.1),
+                          Colors.red.withOpacity(0.05)
+                        ],
+                      ),
+                    ),
+                    child: TextButton.icon(
+                      onPressed: () => _handleLogout(context),
+                      icon: const Icon(Icons.logout, color: Colors.redAccent),
+                      label: const Text(
+                        'LOGOUT',
+                        style: TextStyle(
+                          color: Colors.redAccent,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  /// Handles the logout process and navigates to login screen
+  Future<void> _handleLogout(BuildContext context) async {
+    try {
+      // Get the auth controller
+      final authController = Get.find<AuthController>();
+
+      // Sign out the user
+      await authController.signOut();
+
+      // Navigate directly to login screen
+      Get.offAll(() => const LoginScreen());
+
+      // Show success message
+      Get.snackbar(
+        'Logged Out',
+        'You have been logged out successfully.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to logout. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 
   /// Opens the phone's Text-to-Speech settings directly

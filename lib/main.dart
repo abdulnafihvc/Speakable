@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:speakable/controllers/auth_controller.dart';
 import 'package:speakable/controllers/theme_controller.dart';
 import 'package:speakable/models/user_document.dart';
 import 'package:speakable/screen/login/screen/splash_screen.dart';
@@ -36,6 +38,12 @@ void main() async {
 
   // Initialize theme controller
   Get.put(ThemeController());
+
+  // Initialize Firebase
+  await Firebase.initializeApp();
+
+  // Initialize Auth Controller
+  Get.put(AuthController());
 
   // Initialize voice settings service
   Get.put(VoiceSettingsService());

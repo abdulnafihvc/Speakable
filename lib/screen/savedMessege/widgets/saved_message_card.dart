@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:speakable/models/saved_message.dart';
 import 'package:intl/intl.dart';
 
@@ -196,8 +195,8 @@ class SavedMessageCard extends StatelessWidget {
                   foregroundColor: isPlaying
                       ? Colors.white
                       : (Theme.of(context).brightness == Brightness.dark
-                            ? Colors.black
-                            : Colors.white),
+                          ? Colors.black
+                          : Colors.white),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 8,

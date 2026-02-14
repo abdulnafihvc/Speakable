@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "781455130554",
+    "project_id": "speakable-ec695",
+    "storage_bucket": "speakable-ec695.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:781455130554:android:872b460513efdd32e6a783",
+        "android_client_info": {
+          "package_name": "com.example.speakable"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXNJ8BIoRx08V_6Q7VQ0SoXO50KRqcNG0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
