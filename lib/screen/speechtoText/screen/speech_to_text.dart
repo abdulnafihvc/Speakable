@@ -130,9 +130,8 @@ class _SpeechToTextScreenState extends State<SpeechToTextScreen>
 
       // Set locale based on selected language
       // For Manglish, use Malayalam locale and then transliterate the output to romanized text
-      String localeId = _selectedLanguage == 'manglish'
-          ? 'ml-IN'
-          : _selectedLanguage;
+      String localeId =
+          _selectedLanguage == 'manglish' ? 'ml-IN' : _selectedLanguage;
 
       await _speech.listen(
         onResult: (result) {
@@ -249,9 +248,8 @@ class _SpeechToTextScreenState extends State<SpeechToTextScreen>
           final isMediumScreen = screenWidth >= 360 && screenWidth < 600;
 
           // Responsive padding
-          final horizontalPadding = isSmallScreen
-              ? 16.0
-              : (isMediumScreen ? 20.0 : 24.0);
+          final horizontalPadding =
+              isSmallScreen ? 16.0 : (isMediumScreen ? 20.0 : 24.0);
           final verticalPadding = isSmallScreen ? 16.0 : 20.0;
 
           return SafeArea(

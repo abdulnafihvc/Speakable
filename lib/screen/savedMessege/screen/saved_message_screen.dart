@@ -360,63 +360,63 @@ class _SavedMessegescreenState extends State<SavedMessegescreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _filteredMessages.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    _searchController.text.isNotEmpty
-                        ? Icons.search_off
-                        : Icons.inbox_outlined,
-                    size: 80,
-                    color: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.color?.withOpacity(0.5),
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        _searchController.text.isNotEmpty
+                            ? Icons.search_off
+                            : Icons.inbox_outlined,
+                        size: 80,
+                        color: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.color?.withOpacity(0.5),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        _searchController.text.isNotEmpty
+                            ? 'No messages found'
+                            : 'No saved messages',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _searchController.text.isNotEmpty
+                            ? 'Try a different search term'
+                            : 'Tap + to add a new message',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _searchController.text.isNotEmpty
-                        ? 'No messages found'
-                        : 'No saved messages',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Theme.of(context).textTheme.bodyMedium?.color,
-                      fontWeight: FontWeight.w500,
-                    ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadMessages,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    itemCount: _filteredMessages.length,
+                    itemBuilder: (context, index) {
+                      final message = _filteredMessages[index];
+                      return SavedMessageCard(
+                        message: message,
+                        isPlaying: _playingMessageId == message.id,
+                        onPlay: () => _playMessage(message),
+                        onDelete: () => _deleteMessage(message),
+                        onEdit: () => _showEditMessageDialog(message),
+                        onCopy: () => _copyMessage(message),
+                      );
+                    },
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _searchController.text.isNotEmpty
-                        ? 'Try a different search term'
-                        : 'Tap + to add a new message',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.color?.withOpacity(0.7),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _loadMessages,
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                itemCount: _filteredMessages.length,
-                itemBuilder: (context, index) {
-                  final message = _filteredMessages[index];
-                  return SavedMessageCard(
-                    message: message,
-                    isPlaying: _playingMessageId == message.id,
-                    onPlay: () => _playMessage(message),
-                    onDelete: () => _deleteMessage(message),
-                    onEdit: () => _showEditMessageDialog(message),
-                    onCopy: () => _copyMessage(message),
-                  );
-                },
-              ),
-            ),
+                ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddMessageDialog,
         backgroundColor: Theme.of(context).primaryColor,

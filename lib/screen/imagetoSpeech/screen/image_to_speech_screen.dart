@@ -17,14 +17,14 @@ class ImageToSpeechScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      
+
       // Top bar with back button and title
       appBar: AppBar(
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 2,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Theme.of(context).primaryColor),
-          onPressed: () => Navigator.pop(context),  // Go back to previous screen
+          onPressed: () => Navigator.pop(context), // Go back to previous screen
         ),
         title: Text(
           'Image to Speech',
@@ -36,7 +36,7 @@ class ImageToSpeechScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      
+
       // Main content area
       body: SafeArea(
         child: Padding(
@@ -45,7 +45,7 @@ class ImageToSpeechScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 3),
-              
+
               // Main title
               Text(
                 'Choose a Category',
@@ -53,12 +53,11 @@ class ImageToSpeechScreen extends StatelessWidget {
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   height: 1,
-
                   color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               ),
               const SizedBox(height: 5),
-              
+
               // Description text
               Text(
                 'Select a category to add and manage images',
@@ -75,37 +74,37 @@ class ImageToSpeechScreen extends StatelessWidget {
                     final isLandscape = orientation == Orientation.landscape;
                     final crossAxisCount = isLandscape ? 2 : 1;
                     final aspectRatio = isLandscape ? 3.0 : 2.5;
-                    
+
                     return GridView.count(
                       crossAxisCount: crossAxisCount,
                       mainAxisSpacing: 20,
                       crossAxisSpacing: isLandscape ? 20 : 0,
                       childAspectRatio: aspectRatio,
                       children: [
-                    CategoryCard(
-                      title: 'Family',
-                      icon: Icons.family_restroom,
-                      color: Colors.deepPurple,
-                      onTap: () => _goToPage(context, const FamilyPage()),
-                    ),
-                    CategoryCard(
-                      title: 'Food',
-                      icon: Icons.restaurant,
-                      color: Colors.orange,
-                      onTap: () => _goToPage(context, const FoodPage()),
-                    ),
-                    CategoryCard(
-                      title: 'Drinks',
-                      icon: Icons.local_cafe,
-                      color: Colors.blue,
-                      onTap: () => _goToPage(context, const DrinksPage()),
-                    ),
-                    CategoryCard(
-                      title: 'Travel',
-                      icon: Icons.travel_explore,
-                      color: Colors.teal,
-                      onTap: () => _goToPage(context, const TravelPage()),
-                    ),
+                        CategoryCard(
+                          title: 'Family',
+                          icon: Icons.family_restroom,
+                          color: Colors.deepPurple,
+                          onTap: () => _goToPage(context, const FamilyPage()),
+                        ),
+                        CategoryCard(
+                          title: 'Food',
+                          icon: Icons.restaurant,
+                          color: Colors.orange,
+                          onTap: () => _goToPage(context, const FoodPage()),
+                        ),
+                        CategoryCard(
+                          title: 'Drinks',
+                          icon: Icons.local_cafe,
+                          color: Colors.blue,
+                          onTap: () => _goToPage(context, const DrinksPage()),
+                        ),
+                        CategoryCard(
+                          title: 'Travel',
+                          icon: Icons.travel_explore,
+                          color: Colors.teal,
+                          onTap: () => _goToPage(context, const TravelPage()),
+                        ),
                       ],
                     );
                   },
