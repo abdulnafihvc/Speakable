@@ -15,15 +15,13 @@ class SpeechToTextScreen extends StatefulWidget {
   State<SpeechToTextScreen> createState() => _SpeechToTextScreenState();
 }
 
-class _SpeechToTextScreenState extends State<SpeechToTextScreen>
-    with SingleTickerProviderStateMixin {
+class _SpeechToTextScreenState extends State<SpeechToTextScreen> {
   late stt.SpeechToText _speech;
   bool _isListening = false;
   bool _isAvailable = false;
   String _recognizedText = '';
   double _confidence = 0.0;
   final MessageStorageService _storageService = MessageStorageService();
-  late AnimationController _animationController;
   String _selectedLanguage = 'en-US';
   bool _manglishMode = false;
 
@@ -33,14 +31,16 @@ class _SpeechToTextScreenState extends State<SpeechToTextScreen>
     'manglish': 'Manglish',
   };
 
+  final Map<String, IconData> _languageIcons = {
+    'en-US': Icons.language_rounded,
+    'ml-IN': Icons.translate_rounded,
+    'manglish': Icons.g_translate_rounded,
+  };
+
   @override
   void initState() {
     super.initState();
     _speech = stt.SpeechToText();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    )..repeat(reverse: true);
     _initSpeech();
   }
 
@@ -192,7 +192,7 @@ class _SpeechToTextScreenState extends State<SpeechToTextScreen>
 
   Future<void> _saveText() async {
     if (_recognizedText.isNotEmpty) {
-      await _storageService.saveMessage(_recognizedText);
+      await _storageService.saveMessage(_recognizedText, languageCode: _selectedLanguage);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -215,35 +215,149 @@ class _SpeechToTextScreenState extends State<SpeechToTextScreen>
   @override
   void dispose() {
     _speech.stop();
-    _animationController.dispose();
     super.dispose();
+  }
+
+  PreferredSizeWidget _buildAppBar(
+    BuildContext context,
+    bool isDark,
+    Color primaryColor,
+  ) {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark
+                ? [const Color(0xFF1A1A2E), const Color(0xFF16213E)]
+                : [primaryColor.withOpacity(0.05), primaryColor.withOpacity(0.02)],
+          ),
+        ),
+      ),
+      leading: IconButton(
+        icon: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(Icons.arrow_back_ios_new_rounded,
+              color: primaryColor, size: 18),
+        ),
+        onPressed: () => Navigator.pop(context),
+      ),
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.mic_none_rounded, color: primaryColor, size: 22),
+          const SizedBox(width: 8),
+          Text(
+            'Speech to Text',
+            style: TextStyle(
+              color: isDark ? Colors.white : primaryColor,
+              fontWeight: FontWeight.w700,
+              fontSize: 19,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
+      centerTitle: true,
+    );
+  }
+
+  Widget _buildLanguageChips(bool isDark, Color primaryColor) {
+    return SizedBox(
+      height: 40,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: _languages.entries.map((entry) {
+          final isSelected = _selectedLanguage == entry.key;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: () {
+                if (!_isListening) {
+                  setState(() {
+                    _selectedLanguage = entry.key;
+                    _manglishMode = (entry.key == 'manglish');
+                  });
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: isSelected
+                      ? LinearGradient(
+                          colors: [
+                            primaryColor,
+                            primaryColor.withOpacity(0.7),
+                          ],
+                        )
+                      : null,
+                  color: isSelected
+                      ? null
+                      : (isDark
+                          ? Colors.white.withOpacity(0.08)
+                          : primaryColor.withOpacity(0.06)),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected
+                        ? Colors.transparent
+                        : primaryColor.withOpacity(0.15),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _languageIcons[entry.key],
+                      size: 16,
+                      color: isSelected
+                          ? Colors.white
+                          : primaryColor.withOpacity(0.7),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      entry.value,
+                      style: TextStyle(
+                        color: isSelected
+                            ? Colors.white
+                            : (isDark ? Colors.white70 : primaryColor),
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w500,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        elevation: 2,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).primaryColor),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Speech to Text',
-          style: TextStyle(
-            color: Theme.of(context).primaryColor,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      appBar: _buildAppBar(context, isDark, primaryColor),
       body: LayoutBuilder(
         builder: (context, constraints) {
           // Calculate responsive dimensions
           final screenWidth = constraints.maxWidth;
-          final screenHeight = constraints.maxHeight;
           final isSmallScreen = screenWidth < 360;
           final isMediumScreen = screenWidth >= 360 && screenWidth < 600;
 
@@ -284,81 +398,21 @@ class _SpeechToTextScreenState extends State<SpeechToTextScreen>
                         flex: 1,
                         child: SingleChildScrollView(
                           child: Padding(
-                            padding: EdgeInsets.all(horizontalPadding),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             child: Column(
                               children: [
-                                SizedBox(height: verticalPadding),
-                                // Language Selector
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 12,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(
-                                      context,
-                                    ).primaryColor.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: Theme.of(
-                                        context,
-                                      ).primaryColor.withValues(alpha: 0.3),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.language,
-                                        color: Theme.of(context).primaryColor,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: DropdownButtonHideUnderline(
-                                          child: DropdownButton<String>(
-                                            value: _selectedLanguage,
-                                            isExpanded: true,
-                                            items: _languages.entries.map((
-                                              entry,
-                                            ) {
-                                              return DropdownMenuItem<String>(
-                                                value: entry.key,
-                                                child: Text(
-                                                  entry.value,
-                                                  style: TextStyle(
-                                                    color: Theme.of(context)
-                                                        .textTheme
-                                                        .bodyLarge
-                                                        ?.color,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                              );
-                                            }).toList(),
-                                            onChanged: (String? newValue) {
-                                              if (newValue != null &&
-                                                  !_isListening) {
-                                                setState(() {
-                                                  _selectedLanguage = newValue;
-                                                  _manglishMode =
-                                                      (newValue == 'manglish');
-                                                });
-                                              }
-                                            },
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                _buildLanguageChips(isDark, primaryColor),
                                 const SizedBox(height: 16),
                                 // Info Banner
-                                InfoBannerWidget(isAvailable: _isAvailable),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                                  child: InfoBannerWidget(isAvailable: _isAvailable),
+                                ),
                                 const SizedBox(height: 40),
                                 // Microphone Button
                                 MicButtonWidget(
                                   isListening: _isListening,
                                   onTap: _toggleListening,
-                                  animationController: _animationController,
                                 ),
                                 const SizedBox(height: 20),
                                 // Status Text
@@ -418,40 +472,36 @@ class _SpeechToTextScreenState extends State<SpeechToTextScreen>
                                   ],
                                 ),
                                 const SizedBox(height: 30),
-                                // Action Buttons - Equal width in landscape
-                                ConstrainedBox(
-                                  constraints: BoxConstraints(
-                                    maxWidth: screenWidth * 0.4,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: ActionButtonWidget(
+                                // Action Buttons
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      maxWidth: screenWidth * 0.4,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        ActionButtonWidget(
                                           icon: Icons.copy,
                                           label: 'Copy',
                                           color: Colors.blue,
                                           onTap: _copyText,
                                         ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: ActionButtonWidget(
+                                        ActionButtonWidget(
                                           icon: Icons.delete,
                                           label: 'Clear',
                                           color: Colors.orange,
                                           onTap: _clearText,
                                         ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: ActionButtonWidget(
+                                        ActionButtonWidget(
                                           icon: Icons.save,
                                           label: 'Save',
                                           color: Colors.green,
                                           onTap: _saveText,
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                                 SizedBox(height: verticalPadding),
@@ -465,176 +515,115 @@ class _SpeechToTextScreenState extends State<SpeechToTextScreen>
                 } else {
                   // PORTRAIT LAYOUT: Original vertical layout with scrolling
                   return SingleChildScrollView(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: horizontalPadding,
-                        vertical: verticalPadding,
-                      ),
-                      child: Column(
-                        children: [
-                          SizedBox(height: verticalPadding),
-                          // Language Selector
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).primaryColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Theme.of(
-                                  context,
-                                ).primaryColor.withValues(alpha: 0.3),
+                    child: Column(
+                      children: [
+                        SizedBox(height: verticalPadding),
+                        // Language Selector
+                        _buildLanguageChips(isDark, primaryColor),
+                        const SizedBox(height: 16),
+                        // Info Banner
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                          child: InfoBannerWidget(isAvailable: _isAvailable),
+                        ),
+                        SizedBox(height: isSmallScreen ? 30.0 : 40.0),
+                        // Microphone Button
+                        MicButtonWidget(
+                          isListening: _isListening,
+                          onTap: _toggleListening,
+                        ),
+                        const SizedBox(height: 20),
+                        // Status Text
+                        Column(
+                          children: [
+                            Text(
+                              _isListening ? 'Listening...' : 'Tap to speak',
+                              style: TextStyle(
+                                fontSize: isSmallScreen ? 16.0 : 18.0,
+                                color: _isListening
+                                    ? Colors.red
+                                    : Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium?.color,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.language,
-                                  color: Theme.of(context).primaryColor,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String>(
-                                      value: _selectedLanguage,
-                                      isExpanded: true,
-                                      items: _languages.entries.map((entry) {
-                                        return DropdownMenuItem<String>(
-                                          value: entry.key,
-                                          child: Text(
-                                            entry.value,
-                                            style: TextStyle(
-                                              color: Theme.of(
-                                                context,
-                                              ).textTheme.bodyLarge?.color,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        );
-                                      }).toList(),
-                                      onChanged: (String? newValue) {
-                                        if (newValue != null && !_isListening) {
-                                          setState(() {
-                                            _selectedLanguage = newValue;
-                                            _manglishMode =
-                                                (newValue == 'manglish');
-                                          });
-                                        }
-                                      },
-                                    ),
+                            if (_manglishMode)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          // Info Banner
-                          InfoBannerWidget(isAvailable: _isAvailable),
-                          SizedBox(height: isSmallScreen ? 30.0 : 40.0),
-                          // Microphone Button
-                          MicButtonWidget(
-                            isListening: _isListening,
-                            onTap: _toggleListening,
-                            animationController: _animationController,
-                          ),
-                          const SizedBox(height: 20),
-                          // Status Text
-                          Column(
-                            children: [
-                              Text(
-                                _isListening ? 'Listening...' : 'Tap to speak',
-                                style: TextStyle(
-                                  fontSize: isSmallScreen ? 16.0 : 18.0,
-                                  color: _isListening
-                                      ? Colors.red
-                                      : Theme.of(
-                                          context,
-                                        ).textTheme.bodyMedium?.color,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              if (_manglishMode)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withValues(
+                                      alpha: 0.2,
                                     ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.orange.withValues(
-                                        alpha: 0.2,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.translate,
+                                        size: 16,
+                                        color: Colors.orange[700],
                                       ),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.translate,
-                                          size: 16,
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Manglish Mode Active',
+                                        style: TextStyle(
+                                          fontSize: 12,
                                           color: Colors.orange[700],
+                                          fontWeight: FontWeight.w500,
                                         ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          'Manglish Mode Active',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.orange[700],
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                            ],
-                          ),
-                          SizedBox(height: isSmallScreen ? 30.0 : 40.0),
-                          // Recognized Text Display
-                          TextDisplayWidget(
+                              ),
+                          ],
+                        ),
+                        SizedBox(height: isSmallScreen ? 30.0 : 40.0),
+                        // Recognized Text Display at the top equivalent position
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                          child: TextDisplayWidget(
                             recognizedText: _recognizedText,
                             confidence: _confidence,
                           ),
-                          const SizedBox(height: 25),
-                          // Action Buttons - Equal width with consistent spacing
-                          Row(
+                        ),
+                        const SizedBox(height: 30),
+                        // Action Buttons - Equal width with consistent spacing
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              Expanded(
-                                child: ActionButtonWidget(
-                                  icon: Icons.copy,
-                                  label: 'Copy',
-                                  color: Colors.blue,
-                                  onTap: _copyText,
-                                ),
+                              ActionButtonWidget(
+                                icon: Icons.copy,
+                                label: 'Copy',
+                                color: Colors.blue,
+                                onTap: _copyText,
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: ActionButtonWidget(
-                                  icon: Icons.delete,
-                                  label: 'Clear',
-                                  color: Colors.orange,
-                                  onTap: _clearText,
-                                ),
+                              ActionButtonWidget(
+                                icon: Icons.delete,
+                                label: 'Clear',
+                                color: Colors.orange,
+                                onTap: _clearText,
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: ActionButtonWidget(
-                                  icon: Icons.save,
-                                  label: 'Save',
-                                  color: Colors.green,
-                                  onTap: _saveText,
-                                ),
+                              ActionButtonWidget(
+                                icon: Icons.save,
+                                label: 'Save',
+                                color: Colors.green,
+                                onTap: _saveText,
                               ),
                             ],
                           ),
-                          SizedBox(height: verticalPadding),
-                        ],
-                      ),
+                        ),
+                        SizedBox(height: verticalPadding),
+                      ],
                     ),
                   );
                 }

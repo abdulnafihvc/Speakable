@@ -21,7 +21,7 @@ class MessageStorageService {
         .toList(); // Most recent first
   }
 
-  Future<void> saveMessage(String text) async {
+  Future<void> saveMessage(String text, {String languageCode = 'en-US'}) async {
     final prefs = await SharedPreferences.getInstance();
     final messages = await getSavedMessages();
 
@@ -29,6 +29,7 @@ class MessageStorageService {
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       text: text,
       timestamp: DateTime.now(),
+      languageCode: languageCode,
     );
 
     messages.insert(0, newMessage); // Add to beginning

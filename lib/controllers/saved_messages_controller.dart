@@ -2,6 +2,7 @@ import 'package:speakable/services/google_tts_service.dart';
 import 'package:get/get.dart';
 import 'package:speakable/models/saved_message.dart';
 import 'package:speakable/services/message_storage_service.dart';
+import 'package:speakable/services/manglish_service.dart';
 
 class SavedMessagesController extends GetxController {
   final MessageStorageService _storageService = MessageStorageService();
@@ -44,7 +45,19 @@ class SavedMessagesController extends GetxController {
     } else {
       await flutterTts.stop();
       playingMessageId.value = message.id;
-      await flutterTts.speak(text: message.text, languageCode: 'en-US');
+
+      String textToSpeak = message.text;
+      String languageCode = message.languageCode;
+
+      if (languageCode == 'manglish') {
+        textToSpeak = ManglishService.transliterateToMalayalam(textToSpeak);
+        languageCode = 'ml-IN';
+      }
+
+      await flutterTts.speak(
+        text: textToSpeak, 
+        languageCode: languageCode,
+      );
     }
   }
 

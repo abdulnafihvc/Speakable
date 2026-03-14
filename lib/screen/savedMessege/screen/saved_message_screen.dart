@@ -6,6 +6,7 @@ import 'package:speakable/services/message_storage_service.dart';
 import 'package:speakable/screen/savedMessege/widgets/saved_message_card.dart';
 import 'package:get/get.dart';
 import 'package:speakable/services/voice_settings_service.dart';
+import 'package:speakable/services/manglish_service.dart';
 
 class SavedMessegescreen extends StatefulWidget {
   const SavedMessegescreen({super.key});
@@ -92,9 +93,17 @@ class _SavedMessegescreenState extends State<SavedMessegescreen> {
         _playingMessageId = message.id;
       });
 
+      String textToSpeak = message.text;
+      String languageCode = message.languageCode;
+
+      if (languageCode == 'manglish') {
+        textToSpeak = ManglishService.transliterateToMalayalam(textToSpeak);
+        languageCode = 'ml-IN';
+      }
+
       await _flutterTts.speak(
-        text: message.text,
-        languageCode: 'en-US',
+        text: textToSpeak,
+        languageCode: languageCode,
         useMaleVoice: _voiceSettings.voiceGender.value == 'male',
       );
     }

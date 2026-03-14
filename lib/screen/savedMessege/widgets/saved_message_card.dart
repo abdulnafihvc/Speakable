@@ -86,6 +86,46 @@ class SavedMessageCard extends StatelessWidget {
     );
   }
 
+  Widget _buildLanguageBadge(BuildContext context, String languageCode) {
+    String label = 'English';
+    IconData icon = Icons.language_rounded;
+    Color color = Colors.blue;
+
+    if (languageCode == 'ml-IN') {
+      label = 'Malayalam';
+      icon = Icons.translate_rounded;
+      color = Colors.green;
+    } else if (languageCode == 'manglish') {
+      label = 'Manglish';
+      icon = Icons.g_translate_rounded;
+      color = Colors.orange;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withOpacity(0.5), width: 0.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10, 
+              color: color, 
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMenuOption(
     BuildContext context, {
     required IconData icon,
@@ -151,15 +191,21 @@ class SavedMessageCard extends StatelessWidget {
                 Icon(Icons.text_fields, color: primaryColor, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    DateFormat(
-                      'MMM dd, yyyy - hh:mm a',
-                    ).format(message.timestamp),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).textTheme.bodyMedium?.color,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  child: Row(
+                    children: [
+                      Text(
+                        DateFormat(
+                          'MMM dd, yyyy - hh:mm a',
+                        ).format(message.timestamp),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildLanguageBadge(context, message.languageCode),
+                    ],
                   ),
                 ),
                 IconButton(

@@ -1,12 +1,11 @@
-// Action Button Widget - Reusable button for Copy, Clear, Save actions
-// Displays an icon with label and colored background
+// Action Button Widget - Modern reusable button with Material splash, gradient, and press animation
 import 'package:flutter/material.dart';
 
-class ActionButtonWidget extends StatelessWidget {
-  final IconData icon; // Icon to display (e.g., Icons.copy)
-  final String label; // Button label text (e.g., 'Copy')
-  final Color color; // Background color of the button
-  final VoidCallback onTap; // Callback when button is tapped
+class ActionButtonWidget extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
 
   const ActionButtonWidget({
     super.key,
@@ -17,42 +16,98 @@ class ActionButtonWidget extends StatelessWidget {
   });
 
   @override
+  State<ActionButtonWidget> createState() => _ActionButtonWidgetState();
+}
+
+class _ActionButtonWidgetState extends State<ActionButtonWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 100),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.93).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Generate a lighter shade for gradient
+    final lighterColor = Color.lerp(widget.color, Colors.white, 0.25)!;
+
     return GestureDetector(
-      onTap: onTap,
-      // Rounded container with shadow effect
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(15),
-          // Shadow matches button color for cohesive look
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.3),
-              blurRadius: 10,
-              spreadRadius: 1,
-              offset: const Offset(0, 4),
+      onTapDown: (_) => _scaleController.forward(),
+      onTapUp: (_) {
+        _scaleController.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () => _scaleController.reverse(),
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [widget.color, lighterColor],
             ),
-          ],
-        ),
-        // Row layout: icon on left, label on right
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: Colors.white, size: 24),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: widget.color.withOpacity(isDark ? 0.3 : 0.35),
+                blurRadius: 12,
+                spreadRadius: 0,
+                offset: const Offset(0, 4),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              splashColor: Colors.white.withOpacity(0.2),
+              highlightColor: Colors.white.withOpacity(0.1),
+              onTap: null, // Handled by GestureDetector for scale
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(widget.icon, color: Colors.white, size: 22),
+                    const SizedBox(width: 8),
+                    Text(
+                      widget.label,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ],
+          ),
         ),
       ),
     );
