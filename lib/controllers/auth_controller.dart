@@ -5,6 +5,7 @@ import 'package:speakable/screen/home/screen/home_screen.dart';
 import 'package:speakable/screen/login/screen/login_screen.dart';
 import 'package:speakable/screen/voice_selection/voice_selection_screen.dart';
 import 'package:speakable/services/voice_settings_service.dart';
+import 'package:speakable/utils/error_handler.dart';
 
 class AuthController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -53,14 +54,32 @@ class AuthController extends GetxController {
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
       await userCredential.user!.updateDisplayName(name);
-      Get.snackbar('Success', 'Account created successfully',
-          colorText: Colors.white, backgroundColor: Colors.green);
+      Get.snackbar(
+        'Account Created', 
+        AppErrorMessages.signUpSuccess,
+        colorText: Colors.white, 
+        backgroundColor: Colors.green,
+        icon: const Icon(Icons.check_circle, color: Colors.white),
+        duration: const Duration(seconds: 3),
+      );
     } on FirebaseAuthException catch (e) {
-      Get.snackbar('Error', e.message ?? 'Sign up failed',
-          colorText: Colors.white, backgroundColor: Colors.red);
+      Get.snackbar(
+        'Registration Failed', 
+        ErrorHandler.getAuthErrorMessage(e),
+        colorText: Colors.white, 
+        backgroundColor: Colors.red,
+        icon: const Icon(Icons.error, color: Colors.white),
+        duration: const Duration(seconds: 4),
+      );
     } catch (e) {
-      Get.snackbar('Error', 'An unexpected error occurred',
-          colorText: Colors.white, backgroundColor: Colors.red);
+      Get.snackbar(
+        'Registration Failed', 
+        AppErrorMessages.unexpectedError,
+        colorText: Colors.white, 
+        backgroundColor: Colors.red,
+        icon: const Icon(Icons.error, color: Colors.white),
+        duration: const Duration(seconds: 4),
+      );
     } finally {
       isLoading.value = false;
     }
@@ -72,14 +91,25 @@ class AuthController extends GetxController {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
       // _setInitialScreen will be called automatically due to the listener
     } on FirebaseAuthException catch (e) {
-      Get.snackbar('Error', e.message ?? 'Login failed',
-          colorText: Colors.white, backgroundColor: Colors.red);
+      Get.snackbar(
+        'Sign In Failed', 
+        ErrorHandler.getAuthErrorMessage(e),
+        colorText: Colors.white, 
+        backgroundColor: Colors.red,
+        icon: const Icon(Icons.error, color: Colors.white),
+        duration: const Duration(seconds: 4),
+      );
     } catch (e) {
-      Get.snackbar('Error', 'An unexpected error occurred',
-          colorText: Colors.white, backgroundColor: Colors.red);
+      Get.snackbar(
+        'Sign In Failed', 
+        AppErrorMessages.unexpectedError,
+        colorText: Colors.white, 
+        backgroundColor: Colors.red,
+        icon: const Icon(Icons.error, color: Colors.white),
+        duration: const Duration(seconds: 4),
+      );
     } finally {
       isLoading.value = false;
- 
     }
   }
 

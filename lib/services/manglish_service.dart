@@ -140,8 +140,6 @@ class ManglishService {
     'allallo': 'അല്ലല്ലോ',
 
     // Verbs - to have/exist
-    'undu': 'ഉണ്ട്',
-    'und': 'ഉണ്ട്',
     'undo': 'ഉണ്ടോ',
     'undaayirunnu': 'ഉണ്ടായിരുന്നു',
     'undaakum': 'ഉണ്ടാകും',
@@ -845,276 +843,309 @@ class ManglishService {
     'nee kadayil pokumo': 'നീ കടയിൽ പോകുമോ',
   };
 
-  /// Transliterates Malayalam script to Manglish (romanized) text
+  /// Transliterates Malayalam script to Manglish (romanized) text.
+  /// English / Latin words that appear in the input are passed through unchanged
+  /// (code-switching support: "njaan office il aanu" stays readable).
   static String transliterateToManglish(String malayalamText) {
     if (malayalamText.isEmpty) return malayalamText;
 
-    // Check if text contains Malayalam characters
     final malayalamRegex = RegExp(r'[\u0D00-\u0D7F]');
-    if (!malayalamRegex.hasMatch(malayalamText)) {
-      return malayalamText; // Already in Latin script
-    }
 
-    // Create reverse mappings
+    // ── Reverse lookup: Malayalam whole-word → Manglish ─────────────────
     final reverseCommonWords = <String, String>{};
     _commonWords.forEach((key, value) {
       reverseCommonWords[value] = key;
     });
 
+    // Vowel reverse map
     final reverseVowels = <String, String>{};
     _vowels.forEach((key, value) {
-      reverseVowels[value] = key.toLowerCase();
+      final k = key.toLowerCase();
+      if (!reverseVowels.containsKey(value) || reverseVowels[value]!.length < k.length) {
+        reverseVowels[value] = k;
+      }
     });
 
+    // Consonant reverse map (strip trailing virama)
     final reverseConsonants = <String, String>{};
     _consonants.forEach((key, value) {
-      // Remove virama for mapping
-      String consonant = value.substring(0, value.length - 1);
-      reverseConsonants[consonant] = key.toLowerCase();
+      final consonant = value.substring(0, value.length - 1);
+      final k = key.toLowerCase();
+      if (!reverseConsonants.containsKey(consonant) || reverseConsonants[consonant]!.length < k.length) {
+        reverseConsonants[consonant] = k;
+      }
     });
 
+    // Vowel sign (mathra) reverse map
     final reverseVowelSigns = <String, String>{};
     _vowelSigns.forEach((key, value) {
       if (value.isNotEmpty) {
-        reverseVowelSigns[value] = key.toLowerCase();
+        final k = key.toLowerCase();
+        if (!reverseVowelSigns.containsKey(value) || reverseVowelSigns[value]!.length < k.length) {
+          reverseVowelSigns[value] = k;
+        }
       }
     });
 
-    // Additional chillu characters (special consonants without virama)
-    final chilluMap = <String, String>{
-      'ൺ': 'n',
-      'ൻ': 'n',
-      'ർ': 'r',
-      'ൽ': 'l',
-      'ൾ': 'L',
-      'ൿ': 'k',
-      'ൔ': 'm',
+    // ── Chillu (final-form consonants without virama) ────────────────────
+    const chilluMap = <String, String>{
+      '\u0d3a': 'n', // ൺ
+      '\u0d4b': 'n', // handled elsewhere; ൻ
+      '\u0d7b': 'n', // ൻ chillu
+      '\u0d7c': 'r', // ർ chillu
+      '\u0d7d': 'l', // ൽ chillu
+      '\u0d7e': 'L', // ൾ chillu
+      '\u0d7f': 'k', // ൿ chillu
     };
 
-    // Fallback mapping for any unmapped Malayalam characters
+    // ── Deduplicated conjunct map (longest match wins) ───────────────────
+    final conjunctMap = <String, String>{
+      // 5-char
+      '\u0d38\u0d4d\u0d31\u0d4d\u0d31': 'st',  // സ്റ്റ
+      // 3-char (C+virama+C)
+      '\u0d15\u0d4d\u0d37': 'ksh', // ക്ഷ
+      '\u0d15\u0d4d\u0d15': 'kk',  // ക്ക
+      '\u0d15\u0d4d\u0d32': 'kl',  // ക്ല
+      '\u0d15\u0d4d\u0d30': 'kr',  // ക്ര
+      '\u0d15\u0d4d\u0d35': 'kv',  // ക്വ
+      '\u0d17\u0d4d\u0d17': 'gg',  // ഗ്ഗ
+      '\u0d17\u0d4d\u0d28': 'gn',  // ഗ്ന
+      '\u0d17\u0d4d\u0d2e': 'gm',  // ഗ്മ
+      '\u0d17\u0d4d\u0d32': 'gl',  // ഗ്ല
+      '\u0d17\u0d4d\u0d30': 'gr',  // ഗ്ര
+      '\u0d17\u0d4d\u0d35': 'gv',  // ഗ്വ
+      '\u0d19\u0d4d\u0d19': 'ng',  // ങ്ങ
+      '\u0d19\u0d4d\u0d15': 'nk',  // ങ്ക
+      '\u0d1a\u0d4d\u0d1a': 'ch',  // ച്ച
+      '\u0d1a\u0d4d\u0d1b': 'chh', // ച്ഛ
+      '\u0d1c\u0d4d\u0d1c': 'jj',  // ജ്ജ
+      '\u0d1c\u0d4d\u0d1e': 'jn',  // ജ്ഞ
+      '\u0d1e\u0d4d\u0d1e': 'nj',  // ഞ്ഞ
+      '\u0d1e\u0d4d\u0d1a': 'nch', // ഞ്ച
+      '\u0d1e\u0d4d\u0d1c': 'nj',  // ഞ്ജ
+      '\u0d1f\u0d4d\u0d1f': 'tt',  // ട്ട
+      '\u0d21\u0d4d\u0d21': 'dd',  // ഡ്ഡ
+      '\u0d23\u0d4d\u0d23': 'nn',  // ണ്ണ
+      '\u0d23\u0d4d\u0d1f': 'nd',  // ണ്ട
+      '\u0d24\u0d4d\u0d24': 'tth', // ത്ത
+      '\u0d24\u0d4d\u0d25': 'thh', // ത്ഥ
+      '\u0d24\u0d4d\u0d28': 'thn', // ത്ന
+      '\u0d24\u0d4d\u0d2e': 'thm', // ത്മ
+      '\u0d24\u0d4d\u0d30': 'thr', // ത്ര
+      '\u0d24\u0d4d\u0d2f': 'thy', // ത്യ
+      '\u0d24\u0d4d\u0d35': 'thv', // ത്വ
+      '\u0d24\u0d4d\u0d38': 'ths', // ത്സ
+      '\u0d26\u0d4d\u0d26': 'dd',  // ദ്ദ
+      '\u0d26\u0d4d\u0d27': 'ddh', // ദ്ധ
+      '\u0d26\u0d4d\u0d2e': 'dm',  // ദ്മ
+      '\u0d26\u0d4d\u0d30': 'dr',  // ദ്ര
+      '\u0d26\u0d4d\u0d2f': 'dy',  // ദ്യ
+      '\u0d26\u0d4d\u0d35': 'dv',  // ദ്വ
+      '\u0d28\u0d4d\u0d28': 'nn',  // ന്ന
+      '\u0d28\u0d4d\u0d24': 'nth', // ന്ത
+      '\u0d28\u0d4d\u0d27': 'ndh', // ന്ധ
+      '\u0d28\u0d4d\u0d1f': 'nd',  // ന്ട
+      '\u0d28\u0d4d\u0d2e': 'nm',  // ന്മ
+      '\u0d28\u0d4d\u0d2f': 'ny',  // ന്യ
+      '\u0d28\u0d4d\u0d31': 'nt',  // ന്റ
+      '\u0d2a\u0d4d\u0d2a': 'pp',  // പ്പ
+      '\u0d2a\u0d4d\u0d28': 'pn',  // പ്ന
+      '\u0d2a\u0d4d\u0d32': 'pl',  // പ്ല
+      '\u0d2a\u0d4d\u0d30': 'pr',  // പ്ര
+      '\u0d2c\u0d4d\u0d2c': 'bb',  // ബ്ബ
+      '\u0d2c\u0d4d\u0d26': 'bd',  // ബ്ദ
+      '\u0d2c\u0d4d\u0d27': 'bdh', // ബ്ധ
+      '\u0d2c\u0d4d\u0d1c': 'bj',  // ബ്ജ
+      '\u0d2c\u0d4d\u0d32': 'bl',  // ബ്ല
+      '\u0d2c\u0d4d\u0d30': 'br',  // ബ്ര
+      '\u0d2d\u0d4d\u0d30': 'bhr', // ഭ്ര
+      '\u0d2d\u0d4d\u0d2f': 'bhy', // ഭ്യ
+      '\u0d2e\u0d4d\u0d2e': 'mm',  // മ്മ
+      '\u0d2e\u0d4d\u0d2a': 'mp',  // മ്പ
+      '\u0d2e\u0d4d\u0d32': 'ml',  // മ്ല
+      '\u0d2e\u0d4d\u0d30': 'mr',  // മ്ര
+      '\u0d2e\u0d4d\u0d2f': 'my',  // മ്യ
+      '\u0d2f\u0d4d\u0d2f': 'yy',  // യ്യ
+      '\u0d32\u0d4d\u0d32': 'll',  // ല്ല
+      '\u0d32\u0d4d\u0d2f': 'ly',  // ല്യ
+      '\u0d33\u0d4d\u0d33': 'll',  // ള്ള
+      '\u0d35\u0d4d\u0d35': 'vv',  // വ്വ
+      '\u0d35\u0d4d\u0d30': 'vr',  // വ്ര
+      '\u0d35\u0d4d\u0d2f': 'vy',  // വ്യ
+      '\u0d36\u0d4d\u0d36': 'ssh', // ശ്ശ
+      '\u0d36\u0d4d\u0d30': 'shr', // ശ്ര
+      '\u0d36\u0d4d\u0d2e': 'shm', // ശ്മ
+      '\u0d36\u0d4d\u0d28': 'shn', // ശ്ന
+      '\u0d36\u0d4d\u0d35': 'shv', // ശ്വ
+      '\u0d36\u0d4d\u0d2f': 'shy', // ശ്യ
+      '\u0d37\u0d4d\u0d37': 'ssh', // ഷ്ഷ
+      '\u0d37\u0d4d\u0d15': 'shk', // ഷ്ക
+      '\u0d37\u0d4d\u0d1f': 'sht', // ഷ്ട
+      '\u0d37\u0d4d\u0d20': 'shth',// ഷ്ഠ
+      '\u0d37\u0d4d\u0d2a': 'shp', // ഷ്പ
+      '\u0d37\u0d4d\u0d2e': 'shm', // ഷ്മ
+      '\u0d37\u0d4d\u0d2f': 'shy', // ഷ്യ
+      '\u0d38\u0d4d\u0d38': 'ss',  // സ്സ
+      '\u0d38\u0d4d\u0d15': 'sk',  // സ്ക
+      '\u0d38\u0d4d\u0d24': 'sth', // സ്ത
+      '\u0d38\u0d4d\u0d25': 'sth', // സ്ഥ
+      '\u0d38\u0d4d\u0d28': 'sn',  // സ്ന
+      '\u0d38\u0d4d\u0d2a': 'sp',  // സ്പ
+      '\u0d38\u0d4d\u0d2e': 'sm',  // സ്മ
+      '\u0d38\u0d4d\u0d30': 'sr',  // സ്ര
+      '\u0d38\u0d4d\u0d35': 'sv',  // സ്വ
+      '\u0d38\u0d4d\u0d2f': 'sy',  // സ്യ
+      '\u0d39\u0d4d\u0d28': 'hn',  // ഹ്ന
+      '\u0d39\u0d4d\u0d2e': 'hm',  // ഹ്മ
+      '\u0d39\u0d4d\u0d30': 'hr',  // ഹ്ര
+      '\u0d39\u0d4d\u0d32': 'hl',  // ഹ്ല
+      '\u0d39\u0d4d\u0d2f': 'hy',  // ഹ്യ
+      '\u0d39\u0d4d\u0d35': 'hv',  // ഹ്വ
+      '\u0d31\u0d4d\u0d31': 'tt',  // റ്റ  (alveolar tt)
+    };
+
+    // ── Fallback character map ───────────────────────────────────────────
     final fallbackMap = <String, String>{
-      'അ': 'a',
-      'ആ': 'aa',
-      'ഇ': 'i',
-      'ഈ': 'ee',
-      'ഉ': 'u',
-      'ഊ': 'oo',
-      'ഋ': 'ru',
-      'എ': 'e',
-      'ഏ': 'e',
-      'ഐ': 'ai',
-      'ഒ': 'o',
-      'ഓ': 'o',
-      'ഔ': 'au',
-      'ക': 'ka',
-      'ഖ': 'kha',
-      'ഗ': 'ga',
-      'ഘ': 'gha',
-      'ങ': 'nga',
-      'ച': 'cha',
-      'ഛ': 'chha',
-      'ജ': 'ja',
-      'ഝ': 'jha',
-      'ഞ': 'nja',
-      'ട': 'Ta',
-      'ഠ': 'Tha',
-      'ഡ': 'Da',
-      'ഢ': 'Dha',
-      'ണ': 'Na',
-      'ത': 'tha',
-      'ഥ': 'thha',
-      'ദ': 'da',
-      'ധ': 'dha',
-      'ന': 'na',
-      'പ': 'pa',
-      'ഫ': 'pha',
-      'ബ': 'ba',
-      'ഭ': 'bha',
-      'മ': 'ma',
-      'യ': 'ya',
-      'ര': 'ra',
-      'ല': 'la',
-      'വ': 'va',
-      'ശ': 'sha',
-      'ഷ': 'Sha',
-      'സ': 'sa',
-      'ഹ': 'ha',
-      'ള': 'La',
-      'ഴ': 'zha',
-      'റ': 'Ra',
-      'ം': 'm',
-      'ഃ': 'h',
-      '്': '',
-      'ാ': 'aa',
-      'ി': 'i',
-      'ീ': 'ee',
-      'ു': 'u',
-      'ൂ': 'oo',
-      'ൃ': 'ru',
-      'െ': 'e',
-      'േ': 'e',
-      'ൈ': 'ai',
-      'ൊ': 'o',
-      'ോ': 'o',
-      'ൌ': 'au',
-      'ൗ': 'au',
+      '\u0d05': 'a',  '\u0d06': 'aa', '\u0d07': 'i',   '\u0d08': 'ee',
+      '\u0d09': 'u',  '\u0d0a': 'oo', '\u0d0b': 'ru',
+      '\u0d0e': 'e',  '\u0d0f': 'e',  '\u0d10': 'ai',
+      '\u0d12': 'o',  '\u0d13': 'o',  '\u0d14': 'au',
+      '\u0d15': 'ka', '\u0d16': 'kha','\u0d17': 'ga', '\u0d18': 'gha','\u0d19': 'nga',
+      '\u0d1a': 'cha','\u0d1b': 'chha','\u0d1c': 'ja','\u0d1d': 'jha','\u0d1e': 'nja',
+      '\u0d1f': 'Ta', '\u0d20': 'Tha','\u0d21': 'Da', '\u0d22': 'Dha','\u0d23': 'Na',
+      '\u0d24': 'tha','\u0d25': 'thha','\u0d26': 'da','\u0d27': 'dha','\u0d28': 'na',
+      '\u0d2a': 'pa', '\u0d2b': 'pha','\u0d2c': 'ba', '\u0d2d': 'bha','\u0d2e': 'ma',
+      '\u0d2f': 'ya', '\u0d30': 'ra', '\u0d32': 'la', '\u0d35': 'va',
+      '\u0d36': 'sha','\u0d37': 'Sha','\u0d38': 'sa', '\u0d39': 'ha',
+      '\u0d33': 'La', '\u0d34': 'zha','\u0d31': 'Ra',
+      '\u0d02': 'm',  '\u0d03': 'h',  '\u0d4d': '',
+      '\u0d3e': 'aa', '\u0d3f': 'i',  '\u0d40': 'ee',
+      '\u0d41': 'u',  '\u0d42': 'oo', '\u0d43': 'ru',
+      '\u0d46': 'e',  '\u0d47': 'e',  '\u0d48': 'ai',
+      '\u0d4a': 'o',  '\u0d4b': 'o',  '\u0d4c': 'au', '\u0d57': 'au',
     };
 
-    // Split into words
-    List<String> words = malayalamText.split(RegExp(r'\s+'));
-    List<String> transliteratedWords = [];
-
-    for (String word in words) {
-      if (word.isEmpty) continue;
-
-      // Check for punctuation
-      String punctuation = '';
-      String cleanWord = word;
-      final punctuationRegex = RegExp(r'[.,!?;:]+$');
-      if (punctuationRegex.hasMatch(word)) {
-        final match = punctuationRegex.firstMatch(word);
-        punctuation = match!.group(0)!;
-        cleanWord = word.substring(0, word.length - punctuation.length);
+    // ── Inner function: transliterate one Malayalam word ─────────────────
+    String transliterateWord(String word) {
+      if (reverseCommonWords.containsKey(word)) {
+        return reverseCommonWords[word]!;
       }
 
-      // Check if it's a common word first
-      if (reverseCommonWords.containsKey(cleanWord)) {
-        transliteratedWords.add(reverseCommonWords[cleanWord]! + punctuation);
-        continue;
-      }
-
-      // Character-by-character transliteration
-      String result = '';
+      final buf = StringBuffer();
       int i = 0;
 
-      while (i < cleanWord.length) {
-        bool matched = false;
-        String char = cleanWord[i];
+      while (i < word.length) {
+        final ch = word[i];
 
-        // Check for chillu characters first
-        if (chilluMap.containsKey(char)) {
-          result += chilluMap[char]!;
+        // 1. Chillu
+        if (chilluMap.containsKey(ch)) { buf.write(chilluMap[ch]); i++; continue; }
+
+        // 2. Terminal virama → 'u'  (ആണ്→aanu, ക്ക്→kku)
+        if (ch == '\u0d4d' && i == word.length - 1) {
+          final s = buf.toString();
+          buf.clear();
+          buf.write(s.endsWith('a') ? s.substring(0, s.length - 1) : s);
+          buf.write('u');
           i++;
           continue;
         }
 
-        // Handle conjunct consonants (consonant + virama + consonant)
-        if (i + 2 < cleanWord.length) {
-          String nextChar = cleanWord[i + 1];
-          String charAfterNext = cleanWord[i + 2];
-
-          // Check for consonant + virama + consonant pattern
-          if (reverseConsonants.containsKey(char) &&
-              nextChar == '്' &&
-              reverseConsonants.containsKey(charAfterNext)) {
-            String firstConsonant = reverseConsonants[char]!;
-            String secondConsonant = reverseConsonants[charAfterNext]!;
-
-            // Check if there's a vowel sign after the second consonant
-            if (i + 3 < cleanWord.length &&
-                reverseVowelSigns.containsKey(cleanWord[i + 3])) {
-              String vowelSign = reverseVowelSigns[cleanWord[i + 3]]!;
-              result +=
-                  firstConsonant +
-                  secondConsonant +
-                  (vowelSign.isEmpty ? 'a' : vowelSign);
-              i += 4;
-              matched = true;
-            } else if (i + 3 < cleanWord.length && cleanWord[i + 3] == '്') {
-              // Another virama after second consonant
-              result += firstConsonant + secondConsonant;
-              i += 3;
-              matched = true;
-            } else {
-              // No vowel sign, use inherent 'a'
-              result += firstConsonant + secondConsonant + 'a';
-              i += 3;
-              matched = true;
-            }
-          }
-        }
-
-        // Try to match consonant + vowel sign combinations
-        if (!matched && i + 1 < cleanWord.length) {
-          String nextChar = cleanWord[i + 1];
-
-          // Check if current char is a consonant
-          if (reverseConsonants.containsKey(char)) {
-            String consonant = reverseConsonants[char]!;
-
-            // Check for vowel sign
-            if (reverseVowelSigns.containsKey(nextChar)) {
-              String vowelSign = reverseVowelSigns[nextChar]!;
-              result += consonant + (vowelSign.isEmpty ? 'a' : vowelSign);
-              i += 2;
-              matched = true;
-            } else if (nextChar == '്') {
-              // Virama - consonant without vowel
-              result += consonant;
-              i += 2;
-              matched = true;
-            } else if (nextChar == 'ം' || nextChar == 'ഃ') {
-              // Consonant with inherent 'a' followed by anusvara/visarga
-              result += consonant + 'a';
+        // 3. Conjunct map (longest match first)
+        bool hit = false;
+        for (int len = 5; len >= 3 && !hit; len--) {
+          if (i + len > word.length) continue;
+          final sub = word.substring(i, i + len);
+          final rom = conjunctMap[sub];
+          if (rom != null) {
+            buf.write(rom);
+            i += len;
+            // Attach following vowel sign if present
+            if (i < word.length && reverseVowelSigns.containsKey(word[i])) {
+              buf.write(reverseVowelSigns[word[i]]);
               i++;
-              matched = true;
+            } else if (i < word.length && word[i] == '\u0d4d') {
+              // Virama follows — handled in next iteration (terminal rule may fire)
             } else {
-              // Consonant with inherent 'a'
-              result += consonant + 'a';
-              i++;
-              matched = true;
+              buf.write('a');
+            }
+            hit = true;
+          }
+        }
+        if (hit) continue;
+
+        // 4. Consonant + mathra / consonant + virama
+        if (reverseConsonants.containsKey(ch)) {
+          final rom = reverseConsonants[ch]!;
+          if (i + 1 < word.length) {
+            final nxt = word[i + 1];
+            if (reverseVowelSigns.containsKey(nxt)) {
+              buf.write(rom + reverseVowelSigns[nxt]!);
+              i += 2;
+              continue;
+            } else if (nxt == '\u0d4d') {
+              if (i + 1 == word.length - 1) {
+                // Terminal virama! Appends 'u' instead of being silent.
+                buf.write(rom + 'u');
+                i += 2;
+                continue;
+              }
+              buf.write(rom);
+              i += 2; // consume consonant + virama; next char handled next pass
+              continue;
             }
           }
+          buf.write(rom + 'a');
+          i++;
+          continue;
         }
 
-        if (!matched) {
-          // Check for standalone vowel
-          if (reverseVowels.containsKey(char)) {
-            result += reverseVowels[char]!;
-            i++;
-          }
-          // Check for consonant alone
-          else if (reverseConsonants.containsKey(char)) {
-            result += reverseConsonants[char]! + 'a';
-            i++;
-          }
-          // Check for special characters
-          else if (char == 'ം') {
-            result += 'm';
-            i++;
-          } else if (char == 'ഃ') {
-            result += 'h';
-            i++;
-          } else if (char == '്') {
-            // Virama alone - remove the 'a' we added
-            if (result.endsWith('a')) {
-              result = result.substring(0, result.length - 1);
-            }
-            i++;
-          }
-          // Use fallback mapping for any unmapped character
-          else if (fallbackMap.containsKey(char)) {
-            result += fallbackMap[char]!;
-            i++;
-          }
-          // If still not found, check if it's a Malayalam character
-          else if (malayalamRegex.hasMatch(char)) {
-            // For unmapped Malayalam chars, try to use a phonetic approximation
-            // This should rarely happen with our comprehensive fallback map
-            result += '?';
-            i++;
-          } else {
-            // Keep as is (numbers, punctuation, Latin chars, etc.)
-            result += char;
-            i++;
-          }
-        }
+        // 5. Standalone vowel
+        if (reverseVowels.containsKey(ch)) { buf.write(reverseVowels[ch]); i++; continue; }
+
+        // 6. Anusvara / Visarga
+        if (ch == '\u0d02') { buf.write('m'); i++; continue; }
+        if (ch == '\u0d03') { buf.write('h'); i++; continue; }
+
+        // 7. Virama in non-terminal position (already consumed by step 4 above,
+        //    but guard just in case)
+        if (ch == '\u0d4d') { i++; continue; }
+
+        // 8. Fallback map
+        final fb = fallbackMap[ch];
+        if (fb != null) { buf.write(fb); i++; continue; }
+
+        // 9. Unknown — keep as-is (digits, Latin, punctuation)
+        buf.write(ch);
+        i++;
       }
 
-      transliteratedWords.add(result + punctuation);
+      return buf.toString();
     }
 
-    return transliteratedWords.join(' ');
+    // ── Tokenise the whole input preserving spaces ────────────────────────
+    // Split on word-boundaries while keeping the delimiters so we can
+    // reconstruct spacing faithfully.
+    final parts = malayalamText.split(RegExp(r'\s+'));
+    final resultWords = <String>[];
+
+    for (final token in parts) {
+      if (token.isEmpty) continue;
+
+      // English / Latin word (no Malayalam chars) → pass through unchanged
+      if (!malayalamRegex.hasMatch(token)) {
+        resultWords.add(token);
+        continue;
+      }
+
+      // Trailing punctuation
+      final puncMatch = RegExp(r'[.,!?;:]+$').firstMatch(token);
+      final punc = puncMatch?.group(0) ?? '';
+      final word = punc.isEmpty ? token : token.substring(0, token.length - punc.length);
+
+      resultWords.add(transliterateWord(word) + punc);
+    }
+
+    return resultWords.join(' ');
   }
 
   /// Transliterates Manglish text to Malayalam script with improved accuracy
@@ -1137,7 +1168,7 @@ class ManglishService {
         cleanWord = word.substring(0, word.length - 1);
       }
 
-      String transliterated = _transliterateWord(cleanWord.toLowerCase());
+      String transliterated = _transliterateWord(cleanWord);
       transliteratedWords.add(transliterated + punctuation);
     }
 
@@ -1146,20 +1177,96 @@ class ManglishService {
 
   /// Transliterates a single word
   static String _transliterateWord(String word) {
-    // Check if it's a common word first
-    if (_commonWords.containsKey(word)) {
-      return _commonWords[word]!;
+    // Check if it's an English word (contains only Latin characters and common English patterns)
+    if (_isEnglishWord(word)) {
+      return word; // Return English words unchanged
+    }
+    
+    // Check if it's a common word first (case-insensitive)
+    String lowerWord = word.toLowerCase();
+    if (_commonWords.containsKey(lowerWord)) {
+      return _commonWords[lowerWord]!;
     }
 
     // Check for common phrases
     for (var phrase in _commonWords.keys) {
-      if (phrase.contains(' ') && word == phrase.replaceAll(' ', '')) {
+      if (phrase.contains(' ') && lowerWord == phrase.replaceAll(' ', '')) {
         return _commonWords[phrase]!;
       }
     }
 
     // Syllable-based transliteration
-    return _syllableBasedTransliteration(word);
+    return _syllableBasedTransliteration(lowerWord);
+  }
+
+  /// Checks if a word is likely an English word
+  static bool _isEnglishWord(String word) {
+    if (word.isEmpty) return false;
+    
+    // Check if word contains only basic Latin characters (no Malayalam-specific patterns)
+    final englishPattern = RegExp(r'^[a-zA-Z]+$');
+    if (!englishPattern.hasMatch(word)) return false;
+    
+    // Check for common English words and patterns
+    final commonEnglishWords = {
+      'hello', 'world', 'water', 'phone', 'office', 'school', 'home', 'house',
+      'car', 'bus', 'train', 'food', 'book', 'pen', 'paper', 'computer', 'laptop',
+      'internet', 'wifi', 'email', 'message', 'call', 'video', 'audio', 'music',
+      'time', 'day', 'night', 'morning', 'evening', 'today', 'tomorrow', 'yesterday',
+      'thank', 'you', 'please', 'sorry', 'ok', 'yes', 'no', 'problem', 'help',
+      'good', 'bad', 'nice', 'great', 'happy', 'sad', 'angry', 'excited', 'bored',
+      'work', 'job', 'meeting', 'boss', 'salary', 'project', 'deadline', 'busy', 'free',
+      'family', 'father', 'mother', 'brother', 'sister', 'friend', 'love', 'peace',
+      'money', 'cash', 'price', 'cost', 'bill', 'pay', 'buy', 'sell', 'shop', 'store',
+      'doctor', 'hospital', 'medicine', 'health', 'sick', 'pain', 'fever',
+      'weather', 'rain', 'sun', 'wind', 'hot', 'warm', 'cool', 'climate',
+      'color', 'red', 'blue', 'green', 'yellow', 'black', 'white', 'orange', 'purple',
+      'number', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+      'first', 'second', 'third', 'last', 'next', 'previous', 'before', 'after',
+      'important', 'easy', 'difficult', 'possible', 'impossible', 'sure', 'ready'
+    };
+    
+    // If it's a common English word, return true
+    if (commonEnglishWords.contains(word.toLowerCase())) {
+      return true;
+    }
+    
+    // Check for common English suffixes and patterns
+    final englishPatterns = [
+      RegExp(r'ing$'),     // running, walking, etc.
+      RegExp(r'ed$'),      // walked, talked, etc.
+      RegExp(r'ly$'),      // quickly, slowly, etc.
+      RegExp(r'ful$'),    // helpful, careful, etc.
+      RegExp(r'less$'),   // helpless, careless, etc.
+      RegExp(r'tion$'),   // action, creation, etc.
+      RegExp(r'ity$'),    // ability, possibility, etc.
+      RegExp(r'ive$'),    // active, passive, etc.
+      RegExp(r'able$'),   // readable, writable, etc.
+      RegExp(r'ible$'),   // visible, possible, etc.
+      RegExp(r'ment$'),   // movement, payment, etc.
+      RegExp(r'ize$'),    // organize, realize, etc.
+      RegExp(r'ise$'),    // rise, realize, etc.
+    ];
+    
+    // If it matches common English patterns and is not too short (avoid single letters)
+    if (word.length > 2 && englishPatterns.any((pattern) => pattern.hasMatch(word.toLowerCase()))) {
+      return true;
+    }
+    
+    // For very short words (1-2 letters), be more conservative
+    if (word.length <= 2) {
+      // Only consider very short words as English if they're in our common list
+      return commonEnglishWords.contains(word.toLowerCase());
+    }
+    
+    // For longer words, if they don't contain Malayalam-specific consonant clusters,
+    // they're likely English
+    final malayalamPatterns = [
+      RegExp(r'[nj|zh|Sh|ng|th|dh|ch|kh|gh|bh|ph]'), // Malayalam specific consonants
+      RegExp(r'(aa|ee|oo|ai|au|ou)'), // Long vowels typical in Manglish
+    ];
+    
+    return !malayalamPatterns.any((pattern) => pattern.hasMatch(word.toLowerCase()));
   }
 
   /// Performs syllable-based transliteration

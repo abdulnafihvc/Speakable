@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:permission_handler/permission_handler.dart';
 import 'package:speakable/services/message_storage_service.dart';
 import 'package:speakable/screen/speechtoText/widget/info_banner_widget.dart';
 import 'package:speakable/screen/speechtoText/widget/mic_button_widget.dart';
@@ -46,6 +47,24 @@ class _SpeechToTextScreenState extends State<SpeechToTextScreen> {
 
   Future<void> _initSpeech() async {
     try {
+      // Request microphone permission at runtime (required on Android 6+)
+      final micStatus = await Permission.microphone.request();
+      if (!micStatus.isGranted) {
+        if (mounted) {
+          setState(() => _isAvailable = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Microphone permission denied. Please allow it in Settings.',
+              ),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
+        return;
+      }
+
       // Initialize speech recognition
       bool available = await _speech.initialize(
         onStatus: (status) {
