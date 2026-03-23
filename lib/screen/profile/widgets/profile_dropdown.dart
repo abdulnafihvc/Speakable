@@ -78,7 +78,7 @@ class ProfileDropdown extends StatelessWidget {
         labelText: label,
         labelStyle: TextStyle(color: Colors.grey[400], fontSize: 12),
         prefixIcon:
-            Icon(icon, color: isDark ? Colors.cyanAccent : Colors.cyan[700]),
+            Icon(icon, color: isDark ? Colors.blueAccent : Colors.blue[700]),
         filled: true,
         fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
         border: OutlineInputBorder(
@@ -93,7 +93,7 @@ class ProfileDropdown extends StatelessWidget {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-              color: isDark ? Colors.cyanAccent : Colors.cyan[700]!, width: 1),
+              color: isDark ? Colors.blueAccent : Colors.blue[700]!, width: 1),
         ),
       ),
       items: items.map((String item) {

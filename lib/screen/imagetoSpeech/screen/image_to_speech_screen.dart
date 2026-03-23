@@ -4,6 +4,7 @@ import 'package:speakable/screen/imagetoSpeech/pages/family_page.dart';
 import 'package:speakable/screen/imagetoSpeech/pages/food_page.dart';
 import 'package:speakable/screen/imagetoSpeech/pages/drinks_page.dart';
 import 'package:speakable/screen/imagetoSpeech/pages/travel_page.dart';
+import 'package:speakable/widgets/custom_app_bar.dart';
 
 class ImageToSpeechScreen extends StatelessWidget {
   const ImageToSpeechScreen({super.key});
@@ -19,22 +20,9 @@ class ImageToSpeechScreen extends StatelessWidget {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
       // Top bar with back button and title
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        elevation: 2,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).primaryColor),
-          onPressed: () => Navigator.pop(context), // Go back to previous screen
-        ),
-        title: Text(
-          'Image to Speech',
-          style: TextStyle(
-            color: Theme.of(context).primaryColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-        centerTitle: true,
+      appBar: const CustomAppBar(
+        title: 'Image to Speech',
+        icon: Icons.image_rounded,
       ),
 
       // Main content area

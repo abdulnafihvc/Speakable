@@ -119,12 +119,9 @@ class _EmotionButtonWidgetState extends State<EmotionButtonWidget>
                         fit: BoxFit.contain,
                       )
                     else
-                      Icon(
-                        widget.emotion.icon,
-                        size: 70,
-                        color: isDarkMode
-                            ? Colors.grey.shade300
-                            : Colors.grey.shade700,
+                      Text(
+                        widget.emotion.emoji,
+                        style: const TextStyle(fontSize: 50),
                       ),
                     const SizedBox(height: 8),
                     Padding(

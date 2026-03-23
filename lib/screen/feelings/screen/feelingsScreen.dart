@@ -5,6 +5,7 @@ import 'package:speakable/services/emotion_storage_service.dart';
 import 'package:speakable/screen/feelings/widgets/emotion_button_widget.dart';
 import 'package:get/get.dart';
 import 'package:speakable/services/voice_settings_service.dart';
+import 'package:speakable/widgets/custom_app_bar.dart';
 
 class FeelingsScreen extends StatefulWidget {
   const FeelingsScreen({super.key});
@@ -51,7 +52,7 @@ class _FeelingsScreenState extends State<FeelingsScreen> {
 
   void _showAddCustomEmotionDialog() {
     final textController = TextEditingController();
-    IconData selectedIcon = Icons.sentiment_satisfied;
+    String selectedEmoji = '😀';
 
     showDialog(
       context: context,
@@ -83,37 +84,37 @@ class _FeelingsScreenState extends State<FeelingsScreen> {
                     runSpacing: 8,
                     children:
                         [
-                          Icons.sentiment_satisfied,
-                          Icons.favorite,
-                          Icons.star,
-                          Icons.home,
-                          Icons.school,
-                          Icons.directions_car,
-                          Icons.pets,
-                          Icons.music_note,
-                          Icons.sentiment_very_dissatisfied,
-                          Icons.sentiment_dissatisfied,
-                          Icons.sentiment_very_satisfied,
-                          Icons.sentiment_satisfied_alt,
-                        ].map((icon) {
+                          '😀', '😂', '🥺', '🤔', '😴', 
+                          '🤢', '😡', '🙄', '😇', '🥲', 
+                          '🥳', '😠', '😞', '😁', '🙂',
+                          '❤️', '💖', '👎', '👍',
+                          '👋', '🙏', '🤝', '🫂',
+                          '🚽', '🚿', '🛌', '🍽️', '🧃', 
+                          '🎮', '📺', '⚽', '🎨',
+                          '🏠', '🏫', '🚗', '✈️', '🏥',
+                          '🐶', '🐈', '🐢', '🎵',
+                        ].map((emojiStr) {
                           return GestureDetector(
                             onTap: () =>
-                                setDialogState(() => selectedIcon = icon),
+                                setDialogState(() => selectedEmoji = emojiStr),
                             child: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: selectedIcon == icon
+                                color: selectedEmoji == emojiStr
                                     ? Colors.deepPurple.withOpacity(0.2)
                                     : Colors.grey.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: selectedIcon == icon
+                                  color: selectedEmoji == emojiStr
                                       ? Colors.deepPurple
                                       : Colors.transparent,
                                   width: 2,
                                 ),
                               ),
-                              child: Icon(icon, size: 30),
+                              child: Text(
+                                emojiStr,
+                                style: const TextStyle(fontSize: 30),
+                              ),
                             ),
                           );
                         }).toList(),
@@ -132,7 +133,7 @@ class _FeelingsScreenState extends State<FeelingsScreen> {
                     final newEmotion = Emotion(
                       id: DateTime.now().millisecondsSinceEpoch.toString(),
                       text: textController.text,
-                      icon: selectedIcon,
+                      emoji: selectedEmoji,
                       color: Colors.white,
                       isCustom: true,
                     );
@@ -185,69 +186,36 @@ class _FeelingsScreenState extends State<FeelingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Stack(
-        children: [
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Padding(
-                  padding: const EdgeInsets.only(
-                    top: 16,
-                    left: 16,
-                    right: 16,
-                    bottom: 16,
-                  ),
-                  child: GridView.builder(
-                    gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 200,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          childAspectRatio: 0.95,
-                        ),
-                    itemCount: _emotions.length,
-                    itemBuilder: (context, index) {
-                      final emotion = _emotions[index];
-                      return EmotionButtonWidget(
-                        emotion: emotion,
-                        onTap: () => _speakEmotion(emotion),
-                        onLongPress: emotion.isCustom
-                            ? () => _deleteCustomEmotion(emotion)
-                            : null,
-                      );
-                    },
-                  ),
-                ),
-          Positioned(
-            top: 40,
-            left: 16,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.grey.shade800
-                    : Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.black.withOpacity(0.3)
-                        : Colors.grey.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: IconButton(
-                icon: Icon(
-                  Icons.arrow_back,
-                  color: Theme.of(context).primaryColor,
-                ),
-                onPressed: () => Navigator.pop(context),
+      appBar: const CustomAppBar(
+        title: 'Feelings',
+        icon: Icons.emoji_emotions,
+        themeColor: Colors.orange,
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(16),
+              child: GridView.builder(
+                gridDelegate:
+                    const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 200,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 0.95,
+                    ),
+                itemCount: _emotions.length,
+                itemBuilder: (context, index) {
+                  final emotion = _emotions[index];
+                  return EmotionButtonWidget(
+                    emotion: emotion,
+                    onTap: () => _speakEmotion(emotion),
+                    onLongPress: emotion.isCustom
+                        ? () => _deleteCustomEmotion(emotion)
+                        : null,
+                  );
+                },
               ),
             ),
-          ),
-        ],
-      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddCustomEmotionDialog,
         backgroundColor: Theme.of(context).primaryColor,

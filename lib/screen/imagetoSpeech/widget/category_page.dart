@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:speakable/models/speech_image_model.dart';
 import 'package:speakable/services/speech_image_service.dart';
 import 'package:speakable/screen/imagetoSpeech/widget/speech_image_card.dart';
+import 'package:speakable/widgets/custom_app_bar.dart';
 
 class CategoryPage extends StatefulWidget {
   final String category;
@@ -252,22 +253,8 @@ class _CategoryPageState extends State<CategoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 2,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.deepPurple),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          widget.category,
-          style: const TextStyle(
-            color: Colors.deepPurple,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-        centerTitle: true,
+      appBar: CustomAppBar(
+        title: widget.category,
       ),
       body: _isLoading
           ? const Center(

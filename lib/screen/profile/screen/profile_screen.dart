@@ -8,6 +8,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:speakable/models/user_document.dart';
 import 'package:speakable/controllers/auth_controller.dart';
 import '../widgets/widgets.dart';
+import 'package:speakable/widgets/custom_app_bar.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -418,34 +419,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withOpacity(0.5)
-                : Colors.white.withOpacity(0.5),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.cyan.withOpacity(0.3)),
-          ),
-          child: IconButton(
-            icon: Icon(Icons.arrow_back,
-                color: isDark ? Colors.cyanAccent : Colors.cyan[700], size: 20),
-            onPressed: () => Get.back(),
-          ),
-        ),
-        title: Text(
-          'PROFILE DASHBOARD',
-          style: TextStyle(
-            color: isDark ? Colors.cyanAccent : Colors.cyan[800],
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            letterSpacing: 1.5,
-          ),
-        ),
-        centerTitle: true,
+      appBar: CustomAppBar(
+        title: 'Profile Dashboard',
+        icon: Icons.person_rounded,
+        themeColor: Colors.blue,
+        onBackPressed: () => Get.back(),
         actions: [
           Container(
             margin: const EdgeInsets.all(8),
@@ -454,12 +432,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ? Colors.black.withOpacity(0.5)
                   : Colors.white.withOpacity(0.5),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.cyan.withOpacity(0.3)),
+              border: Border.all(color: Colors.blue.withOpacity(0.3)),
             ),
             child: !_isEditMode
                 ? IconButton(
                     icon: Icon(Icons.edit,
-                        color: isDark ? Colors.cyanAccent : Colors.cyan[700],
+                        color: isDark ? Colors.blueAccent : Colors.blue[700],
                         size: 20),
                     onPressed: _toggleEditMode,
                     tooltip: 'Edit Profile',

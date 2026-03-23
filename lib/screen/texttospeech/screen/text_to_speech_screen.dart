@@ -10,6 +10,7 @@ import 'package:speakable/services/message_storage_service.dart';
 import 'package:speakable/services/manglish_service.dart';
 import 'package:speakable/services/voice_settings_service.dart';
 import 'package:get/get.dart';
+import 'package:speakable/widgets/custom_app_bar.dart';
 
 class SpeechScreen extends StatefulWidget {
   const SpeechScreen({super.key});
@@ -210,7 +211,19 @@ class _SpeechScreenState extends State<SpeechScreen>
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: _buildAppBar(context, isKeyboardVisible, isDark, primaryColor),
+      appBar: CustomAppBar(
+        title: 'Text to Speech',
+        icon: Icons.record_voice_over_rounded,
+        actions: [
+          if (isKeyboardVisible)
+            IconButton(
+              icon: Icon(Icons.keyboard_hide_rounded,
+                  color: primaryColor, size: 22),
+              tooltip: 'Hide Keyboard',
+              onPressed: () => _textFocusNode.unfocus(),
+            ),
+        ],
+      ),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: SafeArea(
@@ -245,67 +258,7 @@ class _SpeechScreenState extends State<SpeechScreen>
     );
   }
 
-  PreferredSizeWidget _buildAppBar(
-    BuildContext context,
-    bool isKeyboardVisible,
-    bool isDark,
-    Color primaryColor,
-  ) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [const Color(0xFF1A1A2E), const Color(0xFF16213E)]
-                : [primaryColor.withOpacity(0.05), primaryColor.withOpacity(0.02)],
-          ),
-        ),
-      ),
-      leading: IconButton(
-        icon: Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: primaryColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(Icons.arrow_back_ios_new_rounded,
-              color: primaryColor, size: 18),
-        ),
-        onPressed: () => Navigator.pop(context),
-      ),
-      title: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.record_voice_over_rounded,
-              color: primaryColor, size: 22),
-          const SizedBox(width: 8),
-          Text(
-            'Text to Speech',
-            style: TextStyle(
-              color: isDark ? Colors.white : primaryColor,
-              fontWeight: FontWeight.w700,
-              fontSize: 19,
-              letterSpacing: 0.3,
-            ),
-          ),
-        ],
-      ),
-      centerTitle: true,
-      actions: [
-        if (isKeyboardVisible)
-          IconButton(
-            icon: Icon(Icons.keyboard_hide_rounded,
-                color: primaryColor, size: 22),
-            tooltip: 'Hide Keyboard',
-            onPressed: () => _textFocusNode.unfocus(),
-          ),
-      ],
-    );
-  }
+
 
   // ─── Language Chips ─────────────────────────────────────────────
   Widget _buildLanguageChips(bool isDark, Color primaryColor) {

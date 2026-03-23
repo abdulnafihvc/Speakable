@@ -7,6 +7,7 @@ import 'package:speakable/screen/savedMessege/widgets/saved_message_card.dart';
 import 'package:get/get.dart';
 import 'package:speakable/services/voice_settings_service.dart';
 import 'package:speakable/services/manglish_service.dart';
+import 'package:speakable/widgets/custom_app_bar.dart';
 
 class SavedMessegescreen extends StatefulWidget {
   const SavedMessegescreen({super.key});
@@ -289,14 +290,9 @@ class _SavedMessegescreenState extends State<SavedMessegescreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        elevation: 2,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).primaryColor),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: _isSearching
+      appBar: CustomAppBar(
+        title: 'Saved Messages',
+        titleWidget: _isSearching
             ? TextField(
                 controller: _searchController,
                 autofocus: true,
@@ -309,14 +305,7 @@ class _SavedMessegescreenState extends State<SavedMessegescreen> {
                   border: InputBorder.none,
                 ),
               )
-            : Text(
-                'Saved Messages',
-                style: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-        centerTitle: true,
+            : null,
         actions: [
           IconButton(
             icon: Icon(

@@ -18,7 +18,7 @@ class SaveButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.cyanAccent.withOpacity(0.3),
+            color: Colors.blueAccent.withOpacity(0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -27,7 +27,7 @@ class SaveButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.cyanAccent,
+          backgroundColor: Colors.blueAccent,
           foregroundColor: Colors.black,
           elevation: 0,
           shape: RoundedRectangleBorder(

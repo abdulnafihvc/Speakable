@@ -41,11 +41,11 @@ class FeelingsController extends GetxController {
     );
   }
 
-  Future<void> addCustomEmotion(String text, IconData icon, Color color) async {
+  Future<void> addCustomEmotion(String text, String emoji, Color color) async {
     final newEmotion = Emotion(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       text: text,
-      icon: icon,
+      emoji: emoji,
       color: color,
       isCustom: true,
     );

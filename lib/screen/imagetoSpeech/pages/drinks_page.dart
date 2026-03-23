@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:speakable/models/speech_image_model.dart';
 import 'package:speakable/services/speech_image_service.dart';
 import 'package:speakable/screen/imagetoSpeech/widget/image_speech_card.dart';
+import 'package:speakable/widgets/custom_app_bar.dart';
 
 class DrinksPage extends StatefulWidget {
   const DrinksPage({super.key});
@@ -422,27 +423,9 @@ class _DrinksPageState extends State<DrinksPage>
 
     return Scaffold(
       backgroundColor: isDarkMode ? Colors.grey[900] : Colors.grey[100],
-      appBar: AppBar(
-        backgroundColor: isDarkMode ? Colors.grey[850] : Colors.white,
-        elevation: 2,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: _categoryColor),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Row(
-          children: [
-            Icon(Icons.local_cafe, color: _categoryColor),
-            const SizedBox(width: 12),
-            Text(
-              _category,
-              style: TextStyle(
-                color: _categoryColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
-            ),
-          ],
-        ),
+      appBar: CustomAppBar(
+        title: _category,
+        icon: Icons.local_cafe,
         actions: [
           if (_images.isNotEmpty)
             Padding(

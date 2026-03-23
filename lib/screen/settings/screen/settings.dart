@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:speakable/controllers/theme_controller.dart';
 import 'package:speakable/services/voice_settings_service.dart';
 import 'package:android_intent_plus/android_intent.dart';
+import 'package:speakable/widgets/custom_app_bar.dart';
 
 import 'dart:io' show Platform;
 
@@ -20,10 +21,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final voiceSettings = Get.find<VoiceSettingsService>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-        centerTitle: true,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: const CustomAppBar(
+        title: 'Settings',
+        icon: Icons.settings_rounded,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

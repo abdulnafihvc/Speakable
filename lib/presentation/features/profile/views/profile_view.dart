@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/profile_controller.dart';
+import 'package:speakable/widgets/custom_app_bar.dart';
 
 /// Profile view demonstrating Material 3 design with GetX
 class ProfileView extends GetView<ProfileController> {
@@ -9,9 +10,9 @@ class ProfileView extends GetView<ProfileController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        centerTitle: true,
+      appBar: CustomAppBar(
+        title: 'Profile',
+        icon: Icons.person_rounded,
         actions: [
           IconButton(
             icon: const Icon(Icons.volume_up),

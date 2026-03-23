@@ -86,14 +86,14 @@ class ProfileTextField extends StatelessWidget {
       onTap: onTap,
       onChanged: onChanged,
       style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-      cursorColor: Colors.cyanAccent,
+      cursorColor: Colors.blueAccent,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: Colors.grey[400], fontSize: 12),
         hintText: hintText,
         hintStyle: TextStyle(color: Colors.grey[700]),
         prefixIcon:
-            Icon(icon, color: isDark ? Colors.cyanAccent : Colors.cyan[700]),
+            Icon(icon, color: isDark ? Colors.blueAccent : Colors.blue[700]),
         filled: true,
         fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
         border: OutlineInputBorder(
@@ -108,7 +108,7 @@ class ProfileTextField extends StatelessWidget {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-              color: isDark ? Colors.cyanAccent : Colors.cyan[700]!, width: 1),
+              color: isDark ? Colors.blueAccent : Colors.blue[700]!, width: 1),
         ),
       ),
     );

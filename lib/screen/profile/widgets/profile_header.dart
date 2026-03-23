@@ -36,13 +36,13 @@ class ProfileHeader extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(
                       color: isDark
-                          ? Colors.cyanAccent.withOpacity(0.5)
-                          : Colors.cyan.withOpacity(0.5),
+                          ? Colors.blueAccent.withOpacity(0.5)
+                          : Colors.blue.withOpacity(0.5),
                       width: 2),
                   boxShadow: [
                     if (isDark)
                       BoxShadow(
-                        color: Colors.cyanAccent.withOpacity(0.2),
+                        color: Colors.blueAccent.withOpacity(0.2),
                         blurRadius: 20,
                         spreadRadius: 5,
                       ),
@@ -61,7 +61,7 @@ class ProfileHeader extends StatelessWidget {
                       ? Image.file(profileImage!, fit: BoxFit.cover)
                       : Icon(Icons.person_outline,
                           size: 60,
-                          color: isDark ? Colors.cyanAccent : Colors.cyan[700]),
+                          color: isDark ? Colors.blueAccent : Colors.blue[700]),
                 ),
               ),
               if (isEditMode)
@@ -73,11 +73,11 @@ class ProfileHeader extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.cyanAccent,
+                        color: Colors.blueAccent,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.cyanAccent.withOpacity(0.4),
+                            color: Colors.blueAccent.withOpacity(0.4),
                             blurRadius: 10,
                           ),
                         ],

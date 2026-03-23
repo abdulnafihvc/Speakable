@@ -40,7 +40,7 @@ class PersonalInfoSection extends StatelessWidget {
     return ProfileSectionCard(
       title: 'PERSONAL DATA',
       icon: Icons.person_outline,
-      accentColor: Colors.cyanAccent,
+      accentColor: Colors.blueAccent,
       child: Column(
         children: [
           ProfileTextField(
